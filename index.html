@@ -498,6 +498,107 @@
     * {
       transition: background-color 0.2s, opacity 0.2s, color 0.2s;
     }
+    
+    .profile-section {
+      display: none;
+      padding: 1rem;
+      background: #f9f9f9;
+      border-radius: 10px;
+      margin: 1rem 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .profile-section.active {
+      display: block;
+    }
+    
+    .profile-section h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    
+    .change-password-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    
+    .change-password-form input {
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .profile-buttons {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .user-email {
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .user-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    /* Add highlight animation for account section */
+    .highlight {
+      animation: pulse 1s;
+    }
+    
+    @keyframes pulse {
+      0% { background-color: #f8f9fa; }
+      50% { background-color: #e8f5e9; }
+      100% { background-color: #f8f9fa; }
+    }
+    
+    /* Make user info clickable */
+    .user-info {
+      cursor: pointer;
+    }
+    
+    .user-info:hover {
+      opacity: 0.9;
+    }
+    
+    /* Fix auth forms responsive styling */
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 15px;
+    }
+    
+    .auth-form input {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    
+    .auth-form button {
+      margin-top: 10px;
+    }
+    
+    #accountSection {
+      padding: 20px;
+      margin-bottom: 80px;
+      scroll-margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -624,6 +725,72 @@
     </a>
   </nav>
 
+  <!-- Account section -->
+  <div class="app-section" id="accountSection">
+    <div class="section-content">
+      <h2>Account</h2>
+      <div id="loginMessage">Please log in or sign up to access your personalized grocery lists and meal plans.</div>
+      
+      <!-- Login/Signup forms -->
+      <div id="authForms">
+        <!-- Login Form -->
+        <div class="auth-form" id="loginForm">
+          <h3>Log In</h3>
+          <input type="email" id="loginEmail" placeholder="Email" required>
+          <input type="password" id="loginPassword" placeholder="Password" required>
+          <button id="loginButton" class="btn btn-primary">Log In</button>
+          <p class="auth-switch">Don't have an account? <a href="#" id="showSignup">Sign Up</a></p>
+        </div>
+        
+        <!-- Signup Form -->
+        <div class="auth-form" id="signupForm" style="display: none;">
+          <h3>Create Account</h3>
+          <input type="email" id="signupEmail" placeholder="Email" required>
+          <input type="password" id="signupPassword" placeholder="Password" required>
+          <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+          <button id="signupButton" class="btn btn-primary">Sign Up</button>
+          <p class="auth-switch">Already have an account? <a href="#" id="showLogin">Log In</a></p>
+        </div>
+        
+        <!-- Join Shared List -->
+        <div class="auth-form" id="joinListForm" style="display: none;">
+          <h3>Join Shared List</h3>
+          <p>Enter the share code provided by your family member:</p>
+          <input type="text" id="shareCodeInput" placeholder="Share Code (e.g. AB12CD)" required>
+          <button id="joinListButton" class="btn btn-primary">Join List</button>
+          <button id="createNewListButton" class="btn btn-secondary">Create New List</button>
+        </div>
+      </div>
+      
+      <!-- Profile Section (shown when logged in) -->
+      <div class="profile-section" id="profileSection">
+        <div class="user-info">
+          <div class="user-email" id="profileEmail"></div>
+          <div class="user-actions">
+            <button id="profileButton" class="btn btn-small">Profile</button>
+            <button id="logoutButton" class="btn btn-small btn-secondary">Log Out</button>
+          </div>
+        </div>
+        
+        <div id="shareCodeDisplay" style="margin-bottom: 1rem;"></div>
+        
+        <!-- Change Password Form -->
+        <div id="passwordChangeForm" style="display: none;">
+          <h3>Change Password</h3>
+          <div class="change-password-form">
+            <input type="password" id="currentPassword" placeholder="Current Password" required>
+            <input type="password" id="newPassword" placeholder="New Password" required>
+            <input type="password" id="confirmNewPassword" placeholder="Confirm New Password" required>
+          </div>
+          <div class="profile-buttons">
+            <button id="cancelPasswordChange" class="btn btn-secondary">Cancel</button>
+            <button id="saveNewPassword" class="btn btn-primary">Save New Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
@@ -638,67 +805,87 @@
       });
     }
     
-    // Simple authentication system using localStorage (without Firebase)
     document.addEventListener('DOMContentLoaded', function() {
-      const loginButton = document.getElementById('loginButton');
+      // UI elements
+      const homeSection = document.getElementById('homeSection');
+      const groceryCounter = document.getElementById('groceryCounter');
+      const mealPlanCounter = document.getElementById('mealPlanCounter');
+      const recipesCounter = document.getElementById('recipesCounter');
+      
+      // Login elements
       const loginModal = document.getElementById('loginModal');
+      const mainLoginButton = document.getElementById('loginButton');
       const cancelLogin = document.getElementById('cancelLogin');
-      const loginForm = document.getElementById('loginForm');
-      const userInfo = document.getElementById('userInfo');
+      const modalLoginForm = document.getElementById('loginForm');
+      const userInfoHeader = document.getElementById('userInfo');
       const userAvatar = document.getElementById('userAvatar');
       const userName = document.getElementById('userName');
-      const addNewBtn = document.getElementById('addNewBtn');
-      const authTitle = document.getElementById('authTitle');
-      const authSubmit = document.getElementById('authSubmit');
+      
+      // Account section elements
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
+      const joinListForm = document.getElementById('joinListForm');
+      const authForms = document.getElementById('authForms');
+      const loginMessage = document.getElementById('loginMessage');
+      const profileSection = document.getElementById('profileSection');
+      const profileEmail = document.getElementById('profileEmail');
+      const shareCodeDisplay = document.getElementById('shareCodeDisplay');
+      const passwordChangeForm = document.getElementById('passwordChangeForm');
+      
+      // Auth form buttons
+      const showSignupLink = document.getElementById('showSignup');
+      const showLoginLink = document.getElementById('showLogin');
+      const loginButton = document.getElementById('loginButton');
+      const signupButton = document.getElementById('signupButton');
+      const joinListButton = document.getElementById('joinListButton');
+      const createNewListButton = document.getElementById('createNewListButton');
+      
+      // Profile buttons
+      const profileButton = document.getElementById('profileButton');
+      const logoutButton = document.getElementById('logoutButton');
+      const cancelPasswordChange = document.getElementById('cancelPasswordChange');
+      const saveNewPassword = document.getElementById('saveNewPassword');
       const switchToSignup = document.getElementById('switchToSignup');
+      const authSubmit = document.getElementById('authSubmit');
       
-      let isSignupMode = false;
+      // Generate random share code
+      function generateShareCode() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+          code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+      }
       
-      // Initialize or get shared lists from localStorage
+      // Initialize users if not exists
+      const users = JSON.parse(localStorage.getItem('appUsers') || '{}');
+      
+      // Initialize shared lists if not exists
       const sharedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
-      let currentUserEmail = localStorage.getItem('currentUserEmail');
-      let currentSharedCode = localStorage.getItem('currentSharedCode');
       
-      // Switch between login and signup
-      switchToSignup.addEventListener('click', function(e) {
-        e.preventDefault();
-        isSignupMode = !isSignupMode;
-        
-        if (isSignupMode) {
-          authTitle.textContent = 'Sign Up';
-          authSubmit.textContent = 'Sign Up';
-          switchToSignup.textContent = 'Log in';
-          document.querySelector('.auth-switch p').textContent = 'Already have an account? ';
-        } else {
-          authTitle.textContent = 'Log In';
-          authSubmit.textContent = 'Log In';
-          switchToSignup.textContent = 'Sign up';
-          document.querySelector('.auth-switch p').textContent = "Don't have an account? ";
-        }
-      });
+      // Check if user is logged in
+      const currentUserEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
+      const currentSharedCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
       
-      // Add New menu
-      addNewBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const options = ['Add Recipe', 'Add to Grocery List', 'Add Meal'];
-        const choice = prompt('What would you like to add?', options.join(', '));
-        
-        if (choice) {
-          if (choice.toLowerCase().includes('recipe')) {
-            window.location.href = 'recipes.html?action=new';
-          } else if (choice.toLowerCase().includes('grocery')) {
-            window.location.href = 'groceries.html?action=new';
-          } else if (choice.toLowerCase().includes('meal')) {
-            window.location.href = 'meal-plan.html?action=new';
-          }
-        }
-      });
-      
-      // Check if user is already logged in
-      function checkLoggedInStatus() {
+      // Update UI based on login state
+      function updateUIAfterLogin() {
         if (currentUserEmail) {
-          loginButton.style.display = 'none';
-          userInfo.classList.add('logged-in');
+          // Hide auth forms
+          authForms.style.display = 'none';
+          loginMessage.style.display = 'none';
+          
+          // Show profile section
+          profileSection.classList.add('active');
+          profileEmail.textContent = currentUserEmail;
+          
+          if (currentSharedCode) {
+            shareCodeDisplay.innerHTML = `<div>Your share code: <strong>${currentSharedCode}</strong> (Share this with family members)</div>`;
+          }
+          
+          // Update header UI
+          mainLoginButton.style.display = 'none';
+          userInfoHeader.classList.add('logged-in');
           
           // Set user avatar initial and name
           const initial = currentUserEmail.charAt(0).toUpperCase();
@@ -707,240 +894,354 @@
           // Extract name from email
           const name = currentUserEmail.split('@')[0];
           userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+          
+          // Update counters
+          updateCounters();
         } else {
-          loginButton.style.display = 'block';
-          userInfo.classList.remove('logged-in');
+          // Show auth forms
+          authForms.style.display = 'block';
+          loginMessage.style.display = 'block';
+          
+          // Hide profile section
+          profileSection.classList.remove('active');
+          
+          // Update header UI
+          mainLoginButton.style.display = 'block';
+          userInfoHeader.classList.remove('logged-in');
         }
       }
       
       // Show login modal
-      loginButton.addEventListener('click', function() {
-        loginModal.classList.add('active');
+      mainLoginButton.addEventListener('click', function() {
+        // Redirect to account section instead of showing modal
+        document.querySelector('#accountSection').scrollIntoView({ behavior: 'smooth' });
+        // Highlight the section
+        document.querySelector('#accountSection').classList.add('highlight');
+        setTimeout(() => {
+          document.querySelector('#accountSection').classList.remove('highlight');
+        }, 2000);
       });
       
-      // Hide login modal
-      cancelLogin.addEventListener('click', function() {
-        loginModal.classList.remove('active');
+      // User profile click
+      userInfoHeader.addEventListener('click', function() {
+        // Redirect to account section
+        document.querySelector('#accountSection').scrollIntoView({ behavior: 'smooth' });
       });
       
-      // Handle login/signup form submission
-      loginForm.addEventListener('submit', function(e) {
+      // Switch between login and signup forms
+      showSignupLink.addEventListener('click', function(e) {
         e.preventDefault();
-        
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const rememberMe = document.getElementById('rememberMe').checked;
-        
-        if (!email || !email.includes('@')) {
-          alert('Please enter a valid email address.');
-          return;
-        }
-        
-        if (!password || password.length < 6) {
-          alert('Password must be at least 6 characters long.');
-          return;
-        }
-        
-        if (isSignupMode) {
-          // Sign up
-          console.log('Attempting to create user with email:', email);
-          
-          // Check if user already exists
-          const users = JSON.parse(localStorage.getItem('users') || '{}');
-          if (users[email]) {
-            alert('Failed to create account: This email is already in use. Please try logging in instead.');
-            return;
-          }
-          
-          // Create new user
-          users[email] = {
-            email: email,
-            password: hashPassword(password), // Simple hash for demo purposes
-            createdAt: new Date().toISOString()
-          };
-          localStorage.setItem('users', JSON.stringify(users));
-          
-          // Create a unique sharing code
-          const sharingCode = generateSharingCode();
-          
-          // Create empty grocery list
-          if (!sharedLists[sharingCode]) {
-            sharedLists[sharingCode] = {
-              owner: email,
-              createdAt: new Date().toISOString(),
-              sharedWith: [email],
-              items: []
-            };
-          }
-          
-          // Save shared lists
-          localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
-          
-          // Set user as logged in
-          loginUser(email, sharingCode, rememberMe);
-          
-          // Close modal
-          loginModal.classList.remove('active');
-          
-          // Display success message
-          alert('Account created successfully! You are now logged in.\n\nYour sharing code is: ' + sharingCode + '\n\nShare this code with family members so they can access your grocery list.');
-        } else {
-          // Log in
-          console.log('Attempting to sign in user with email:', email);
-          
-          // Check if user exists
-          const users = JSON.parse(localStorage.getItem('users') || '{}');
-          const user = users[email];
-          
-          if (!user || user.password !== hashPassword(password)) {
-            alert('Failed to log in: Invalid email or password.');
-            return;
-          }
-          
-          // Find a list shared with this user
-          let userSharedCode = null;
-          Object.keys(sharedLists).forEach(code => {
-            if (sharedLists[code].sharedWith.includes(email)) {
-              userSharedCode = code;
-            }
-          });
-          
-          if (!userSharedCode) {
-            // Ask for a sharing code if no shared list found
-            userSharedCode = prompt('Enter a sharing code to access a shared grocery list, or leave blank to create a new list:');
-            
-            if (userSharedCode) {
-              // If code exists, add user to shared list
-              if (sharedLists[userSharedCode]) {
-                if (!sharedLists[userSharedCode].sharedWith.includes(email)) {
-                  sharedLists[userSharedCode].sharedWith.push(email);
-                  localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
-                }
-              } else {
-                alert('Invalid sharing code. Creating a new list instead.');
-                userSharedCode = generateSharingCode();
-                sharedLists[userSharedCode] = {
-                  owner: email,
-                  createdAt: new Date().toISOString(),
-                  sharedWith: [email],
-                  items: []
-                };
-                localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
-              }
-            } else {
-              // Create a new list if no code provided
-              userSharedCode = generateSharingCode();
-              sharedLists[userSharedCode] = {
-                owner: email,
-                createdAt: new Date().toISOString(),
-                sharedWith: [email],
-                items: []
-              };
-              localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
-            }
-          }
-          
-          // Set user as logged in
-          loginUser(email, userSharedCode, rememberMe);
-          
-          // Close modal
-          loginModal.classList.remove('active');
-        }
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'block';
       });
       
-      // Simple hash function for passwords (for demo purposes only)
-      function hashPassword(password) {
-        // This is NOT secure - in a real app, use proper hashing
-        let hash = 0;
-        for (let i = 0; i < password.length; i++) {
-          const char = password.charCodeAt(i);
-          hash = ((hash << 5) - hash) + char;
-          hash = hash & hash; // Convert to 32bit integer
-        }
-        return hash.toString();
+      showLoginLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        signupForm.style.display = 'none';
+        loginForm.style.display = 'block';
+      });
+      
+      // Modal login/signup toggle
+      if (switchToSignup) {
+        switchToSignup.addEventListener('click', function(e) {
+          e.preventDefault();
+          // Close modal and redirect to signup in account section
+          loginModal.classList.remove('active');
+          document.querySelector('#accountSection').scrollIntoView({ behavior: 'smooth' });
+          loginForm.style.display = 'none';
+          signupForm.style.display = 'block';
+        });
       }
       
-      // Generate a random sharing code
-      function generateSharingCode() {
-        return Math.random().toString(36).substring(2, 8).toUpperCase();
+      // Cancel login modal
+      if (cancelLogin) {
+        cancelLogin.addEventListener('click', function() {
+          loginModal.classList.remove('active');
+        });
       }
       
-      // Login a user
-      function loginUser(email, sharingCode, rememberMe) {
-        currentUserEmail = email;
-        currentSharedCode = sharingCode;
+      // Modal login form submission
+      if (modalLoginForm) {
+        modalLoginForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+          const rememberMe = document.getElementById('rememberMe')?.checked;
+          
+          if (!email || !password) {
+            alert('Please enter both email and password');
+            return;
+          }
+          
+          // Check if user exists and password matches
+          if (users[email] && users[email].password === password) {
+            // Store current user in session
+            if (rememberMe) {
+              localStorage.setItem('currentUserEmail', email);
+            } else {
+              sessionStorage.setItem('currentUserEmail', email);
+            }
+            
+            // Check if user has a share code
+            if (users[email].shareCode) {
+              localStorage.setItem('currentSharedCode', users[email].shareCode);
+              loginModal.classList.remove('active');
+              updateUIAfterLogin();
+            } else {
+              // Show join list form
+              alert('Please enter a share code in the account section below.');
+              loginModal.classList.remove('active');
+              document.querySelector('#accountSection').scrollIntoView({ behavior: 'smooth' });
+              loginForm.style.display = 'none';
+              signupForm.style.display = 'none';
+              joinListForm.style.display = 'block';
+            }
+          } else {
+            alert('Invalid email or password');
+          }
+        });
+      }
+      
+      // When login button is clicked in the account section
+      if (loginButton) {
+        loginButton.addEventListener('click', function() {
+          const email = document.getElementById('loginEmail').value;
+          const password = document.getElementById('loginPassword').value;
+          
+          if (!email || !password) {
+            alert('Please enter both email and password');
+            return;
+          }
+          
+          // Check if user exists and password matches
+          if (users[email] && users[email].password === password) {
+            // Store current user in session
+            localStorage.setItem('currentUserEmail', email);
+            
+            // Check if user has a share code
+            if (users[email].shareCode) {
+              localStorage.setItem('currentSharedCode', users[email].shareCode);
+              updateUIAfterLogin();
+            } else {
+              // Show join list form
+              loginForm.style.display = 'none';
+              joinListForm.style.display = 'block';
+            }
+          } else {
+            alert('Invalid email or password');
+          }
+        });
+      }
+      
+      // When signup button is clicked
+      signupButton.addEventListener('click', function() {
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
         
-        // Save to storage
-        if (rememberMe) {
-          localStorage.setItem('currentUserEmail', email);
-          localStorage.setItem('currentSharedCode', sharingCode);
-        } else {
-          sessionStorage.setItem('currentUserEmail', email);
-          sessionStorage.setItem('currentSharedCode', sharingCode);
-          localStorage.removeItem('currentUserEmail');
-          localStorage.removeItem('currentSharedCode');
+        if (!email || !password || !confirmPassword) {
+          alert('Please fill all fields');
+          return;
         }
+        
+        if (password !== confirmPassword) {
+          alert('Passwords do not match');
+          return;
+        }
+        
+        // Check if user already exists
+        if (users[email]) {
+          alert('User with this email already exists');
+          return;
+        }
+        
+        // Generate a share code
+        const shareCode = generateShareCode();
+        
+        // Create user account
+        users[email] = {
+          password: password,
+          shareCode: shareCode,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Create empty shared list
+        sharedLists[shareCode] = {
+          owner: email,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          items: []
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('appUsers', JSON.stringify(users));
+        localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+        
+        // Set current user
+        localStorage.setItem('currentUserEmail', email);
+        localStorage.setItem('currentSharedCode', shareCode);
         
         // Update UI
-        checkLoggedInStatus();
-      }
+        updateUIAfterLogin();
+        
+        // Show success message
+        alert(`Account created! Your share code is: ${shareCode}\n\nShare this code with family members so they can access your grocery list when they log in.`);
+      });
       
-      // User logout
-      userInfo.addEventListener('click', function() {
-        if (confirm('Do you want to log out?')) {
-          currentUserEmail = null;
-          currentSharedCode = null;
-          localStorage.removeItem('currentUserEmail');
-          localStorage.removeItem('currentSharedCode');
-          sessionStorage.removeItem('currentUserEmail');
-          sessionStorage.removeItem('currentSharedCode');
-          
-          // Update UI
-          checkLoggedInStatus();
+      // Join existing list
+      joinListButton.addEventListener('click', function() {
+        const shareCode = document.getElementById('shareCodeInput').value.toUpperCase();
+        
+        if (!shareCode) {
+          alert('Please enter a share code');
+          return;
+        }
+        
+        // Check if share code exists
+        if (!sharedLists[shareCode]) {
+          alert('Invalid share code. Please check and try again.');
+          return;
+        }
+        
+        // Update user with share code
+        const email = localStorage.getItem('currentUserEmail');
+        users[email].shareCode = shareCode;
+        
+        // Save to localStorage
+        localStorage.setItem('appUsers', JSON.stringify(users));
+        localStorage.setItem('currentSharedCode', shareCode);
+        
+        // Update UI
+        updateUIAfterLogin();
+        
+        alert('You have successfully joined the shared list!');
+      });
+      
+      // Create new list
+      createNewListButton.addEventListener('click', function() {
+        const email = localStorage.getItem('currentUserEmail');
+        
+        // Generate a new share code
+        const shareCode = generateShareCode();
+        
+        // Update user with new share code
+        users[email].shareCode = shareCode;
+        
+        // Create empty shared list
+        sharedLists[shareCode] = {
+          owner: email,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          items: []
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('appUsers', JSON.stringify(users));
+        localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+        localStorage.setItem('currentSharedCode', shareCode);
+        
+        // Update UI
+        updateUIAfterLogin();
+        
+        alert(`New list created! Your share code is: ${shareCode}`);
+      });
+      
+      // Log out
+      logoutButton.addEventListener('click', function() {
+        // Clear session data
+        localStorage.removeItem('currentUserEmail');
+        localStorage.removeItem('currentSharedCode');
+        sessionStorage.removeItem('currentUserEmail');
+        sessionStorage.removeItem('currentSharedCode');
+        
+        // Update UI
+        updateUIAfterLogin();
+        
+        // Show login form
+        signupForm.style.display = 'none';
+        joinListForm.style.display = 'none';
+        loginForm.style.display = 'block';
+      });
+      
+      // Toggle password change form
+      profileButton.addEventListener('click', function() {
+        if (passwordChangeForm.style.display === 'none') {
+          passwordChangeForm.style.display = 'block';
+        } else {
+          passwordChangeForm.style.display = 'none';
         }
       });
       
-      // Share button functionality (you can add this to the UI)
-      function showShareOptions() {
-        if (!currentUserEmail || !currentSharedCode) {
-          alert('Please log in to share your grocery list.');
+      // Cancel password change
+      cancelPasswordChange.addEventListener('click', function() {
+        passwordChangeForm.style.display = 'none';
+        // Clear form fields
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmNewPassword').value = '';
+      });
+      
+      // Save new password
+      saveNewPassword.addEventListener('click', function() {
+        const email = localStorage.getItem('currentUserEmail');
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+        
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+          alert('Please fill all password fields');
           return;
         }
         
-        const sharedList = sharedLists[currentSharedCode];
-        if (!sharedList) {
-          alert('No active grocery list found.');
+        if (newPassword !== confirmNewPassword) {
+          alert('New passwords do not match');
           return;
         }
         
-        alert('Your sharing code is: ' + currentSharedCode + '\n\nShare this code with family members so they can access your grocery list when they log in.');
-      }
-      
-      // Initialize the UI
-      checkLoggedInStatus();
-      
-      // Fallback to localStorage if not logged in or offline
-      const groceryCounter = document.getElementById('groceryCounter');
-      const groceryCount = JSON.parse(localStorage.getItem('groceryCount') || '{"total":0,"remaining":0}');
-      
-      if (groceryCount.total > 0) {
-        if (groceryCount.remaining === 0) {
-          groceryCounter.textContent = `All ${groceryCount.total} items checked off`;
-        } else {
-          groceryCounter.textContent = `${groceryCount.remaining} of ${groceryCount.total} items remaining`;
+        // Verify current password
+        if (users[email].password !== currentPassword) {
+          alert('Current password is incorrect');
+          return;
         }
-      } else {
-        groceryCounter.textContent = "No items on your list";
+        
+        // Update password
+        users[email].password = newPassword;
+        
+        // Save to localStorage
+        localStorage.setItem('appUsers', JSON.stringify(users));
+        
+        // Clear form and hide
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmNewPassword').value = '';
+        passwordChangeForm.style.display = 'none';
+        
+        alert('Password changed successfully!');
+      });
+      
+      // Update counters from localStorage data
+      function updateCounters() {
+        // Update grocery counter
+        const groceryCount = JSON.parse(localStorage.getItem('groceryCount') || '{"total": 0, "remaining": 0}');
+        groceryCounter.textContent = groceryCount.remaining + '/' + groceryCount.total;
+        
+        // Update meal plan counter (mocked for now)
+        const mealPlanCount = JSON.parse(localStorage.getItem('mealPlanCount') || '{"planned": 0, "total": 7}');
+        mealPlanCounter.textContent = mealPlanCount.planned + '/' + mealPlanCount.total;
+        
+        // Update recipes counter (mocked for now)
+        const recipesCount = JSON.parse(localStorage.getItem('recipesCount') || '{"saved": 0}');
+        recipesCounter.textContent = recipesCount.saved;
       }
       
-      // Make share function globally available for other pages
-      window.showShareOptions = showShareOptions;
-      window.getCurrentSharedCode = function() {
-        return currentSharedCode;
-      };
-      window.getCurrentUserEmail = function() {
+      // Get current user if logged in
+      function getCurrentUser() {
         return currentUserEmail;
-      };
+      }
+      
+      // Initialize UI based on login state
+      updateUIAfterLogin();
     });
   </script>
 </body>
