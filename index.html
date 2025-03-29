@@ -638,21 +638,7 @@
       });
     }
     
-    // Initialize Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyD6x5v9TTR3z7xwYGcZMmJNAY3-Z9qh0aE",
-      authDomain: "grocery-meal-planner-app.firebaseapp.com",
-      projectId: "grocery-meal-planner-app",
-      storageBucket: "grocery-meal-planner-app.appspot.com",
-      messagingSenderId: "654025936932",
-      appId: "1:654025936932:web:8a61d7cfc8b68ba86aabce"
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    
-    // Login functionality
+    // Simple authentication system using localStorage (without Firebase)
     document.addEventListener('DOMContentLoaded', function() {
       const loginButton = document.getElementById('loginButton');
       const loginModal = document.getElementById('loginModal');
@@ -667,6 +653,11 @@
       const switchToSignup = document.getElementById('switchToSignup');
       
       let isSignupMode = false;
+      
+      // Initialize or get shared lists from localStorage
+      const sharedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
+      let currentUserEmail = localStorage.getItem('currentUserEmail');
+      let currentSharedCode = localStorage.getItem('currentSharedCode');
       
       // Switch between login and signup
       switchToSignup.addEventListener('click', function(e) {
@@ -703,29 +694,24 @@
         }
       });
       
-      // Check if user is authenticated via Firebase
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          // User is signed in
+      // Check if user is already logged in
+      function checkLoggedInStatus() {
+        if (currentUserEmail) {
           loginButton.style.display = 'none';
           userInfo.classList.add('logged-in');
           
           // Set user avatar initial and name
-          const initial = user.email.charAt(0).toUpperCase();
+          const initial = currentUserEmail.charAt(0).toUpperCase();
           userAvatar.textContent = initial;
           
-          // Extract name from email or use displayName
-          const name = user.displayName || user.email.split('@')[0];
+          // Extract name from email
+          const name = currentUserEmail.split('@')[0];
           userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-          
-          // Load shared data
-          loadUserData(user.uid);
         } else {
-          // User is signed out
           loginButton.style.display = 'block';
           userInfo.classList.remove('logged-in');
         }
-      });
+      }
       
       // Show login modal
       loginButton.addEventListener('click', function() {
@@ -745,120 +731,193 @@
         const password = document.getElementById('password').value;
         const rememberMe = document.getElementById('rememberMe').checked;
         
+        if (!email || !email.includes('@')) {
+          alert('Please enter a valid email address.');
+          return;
+        }
+        
+        if (!password || password.length < 6) {
+          alert('Password must be at least 6 characters long.');
+          return;
+        }
+        
         if (isSignupMode) {
           // Sign up
-          auth.createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-              const user = userCredential.user;
-              console.log('New user created:', user);
-              
-              // Create user document in Firestore
-              createUserData(user.uid, email);
-              
-              // Set persistence
-              setPersistence(rememberMe);
-              
-              // Close modal
-              loginModal.classList.remove('active');
-            })
-            .catch((error) => {
-              alert('Sign up error: ' + error.message);
-            });
+          console.log('Attempting to create user with email:', email);
+          
+          // Check if user already exists
+          const users = JSON.parse(localStorage.getItem('users') || '{}');
+          if (users[email]) {
+            alert('Failed to create account: This email is already in use. Please try logging in instead.');
+            return;
+          }
+          
+          // Create new user
+          users[email] = {
+            email: email,
+            password: hashPassword(password), // Simple hash for demo purposes
+            createdAt: new Date().toISOString()
+          };
+          localStorage.setItem('users', JSON.stringify(users));
+          
+          // Create a unique sharing code
+          const sharingCode = generateSharingCode();
+          
+          // Create empty grocery list
+          if (!sharedLists[sharingCode]) {
+            sharedLists[sharingCode] = {
+              owner: email,
+              createdAt: new Date().toISOString(),
+              sharedWith: [email],
+              items: []
+            };
+          }
+          
+          // Save shared lists
+          localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+          
+          // Set user as logged in
+          loginUser(email, sharingCode, rememberMe);
+          
+          // Close modal
+          loginModal.classList.remove('active');
+          
+          // Display success message
+          alert('Account created successfully! You are now logged in.\n\nYour sharing code is: ' + sharingCode + '\n\nShare this code with family members so they can access your grocery list.');
         } else {
           // Log in
-          auth.signInWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-              const user = userCredential.user;
-              console.log('User logged in:', user);
-              
-              // Set persistence
-              setPersistence(rememberMe);
-              
-              // Close modal
-              loginModal.classList.remove('active');
-            })
-            .catch((error) => {
-              alert('Login error: ' + error.message);
-            });
+          console.log('Attempting to sign in user with email:', email);
+          
+          // Check if user exists
+          const users = JSON.parse(localStorage.getItem('users') || '{}');
+          const user = users[email];
+          
+          if (!user || user.password !== hashPassword(password)) {
+            alert('Failed to log in: Invalid email or password.');
+            return;
+          }
+          
+          // Find a list shared with this user
+          let userSharedCode = null;
+          Object.keys(sharedLists).forEach(code => {
+            if (sharedLists[code].sharedWith.includes(email)) {
+              userSharedCode = code;
+            }
+          });
+          
+          if (!userSharedCode) {
+            // Ask for a sharing code if no shared list found
+            userSharedCode = prompt('Enter a sharing code to access a shared grocery list, or leave blank to create a new list:');
+            
+            if (userSharedCode) {
+              // If code exists, add user to shared list
+              if (sharedLists[userSharedCode]) {
+                if (!sharedLists[userSharedCode].sharedWith.includes(email)) {
+                  sharedLists[userSharedCode].sharedWith.push(email);
+                  localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+                }
+              } else {
+                alert('Invalid sharing code. Creating a new list instead.');
+                userSharedCode = generateSharingCode();
+                sharedLists[userSharedCode] = {
+                  owner: email,
+                  createdAt: new Date().toISOString(),
+                  sharedWith: [email],
+                  items: []
+                };
+                localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+              }
+            } else {
+              // Create a new list if no code provided
+              userSharedCode = generateSharingCode();
+              sharedLists[userSharedCode] = {
+                owner: email,
+                createdAt: new Date().toISOString(),
+                sharedWith: [email],
+                items: []
+              };
+              localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+            }
+          }
+          
+          // Set user as logged in
+          loginUser(email, userSharedCode, rememberMe);
+          
+          // Close modal
+          loginModal.classList.remove('active');
         }
       });
       
-      // Set user persistence
-      function setPersistence(rememberMe) {
-        const persistence = rememberMe ? 
-          firebase.auth.Auth.Persistence.LOCAL : 
-          firebase.auth.Auth.Persistence.SESSION;
-          
-        auth.setPersistence(persistence)
-          .catch((error) => {
-            console.error('Persistence error:', error);
-          });
+      // Simple hash function for passwords (for demo purposes only)
+      function hashPassword(password) {
+        // This is NOT secure - in a real app, use proper hashing
+        let hash = 0;
+        for (let i = 0; i < password.length; i++) {
+          const char = password.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash.toString();
       }
       
-      // Create user data in Firestore
-      function createUserData(userId, email) {
-        db.collection('users').doc(userId).set({
-          email: email,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          sharedLists: []
-        })
-        .catch((error) => {
-          console.error('Error creating user data:', error);
-        });
+      // Generate a random sharing code
+      function generateSharingCode() {
+        return Math.random().toString(36).substring(2, 8).toUpperCase();
       }
       
-      // Load user data from Firestore
-      function loadUserData(userId) {
-        // Load grocery list from Firestore
-        db.collection('groceryLists')
-          .where('sharedWith', 'array-contains', userId)
-          .onSnapshot((snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-              if (change.type === 'added' || change.type === 'modified') {
-                const listData = change.doc.data();
-                // Store in localStorage for offline access
-                localStorage.setItem('groceryList', JSON.stringify(listData.items || []));
-                updateGroceryCounter(listData.items || []);
-              }
-            });
-          }, (error) => {
-            console.error('Error loading grocery lists:', error);
-          });
+      // Login a user
+      function loginUser(email, sharingCode, rememberMe) {
+        currentUserEmail = email;
+        currentSharedCode = sharingCode;
+        
+        // Save to storage
+        if (rememberMe) {
+          localStorage.setItem('currentUserEmail', email);
+          localStorage.setItem('currentSharedCode', sharingCode);
+        } else {
+          sessionStorage.setItem('currentUserEmail', email);
+          sessionStorage.setItem('currentSharedCode', sharingCode);
+          localStorage.removeItem('currentUserEmail');
+          localStorage.removeItem('currentSharedCode');
+        }
+        
+        // Update UI
+        checkLoggedInStatus();
       }
       
       // User logout
       userInfo.addEventListener('click', function() {
         if (confirm('Do you want to log out?')) {
-          auth.signOut().then(() => {
-            console.log('User signed out');
-          }).catch((error) => {
-            console.error('Error signing out:', error);
-          });
+          currentUserEmail = null;
+          currentSharedCode = null;
+          localStorage.removeItem('currentUserEmail');
+          localStorage.removeItem('currentSharedCode');
+          sessionStorage.removeItem('currentUserEmail');
+          sessionStorage.removeItem('currentSharedCode');
+          
+          // Update UI
+          checkLoggedInStatus();
         }
       });
       
-      // Update grocery counter on home page
-      function updateGroceryCounter(groceryItems = []) {
-        const groceryCounter = document.getElementById('groceryCounter');
-        const total = groceryItems.length;
-        const remaining = groceryItems.filter(item => !item.checked).length;
-        
-        if (total > 0) {
-          if (remaining === 0) {
-            groceryCounter.textContent = `All ${total} items checked off`;
-          } else {
-            groceryCounter.textContent = `${remaining} of ${total} items remaining`;
-          }
-          
-          // Store for offline usage
-          localStorage.setItem('groceryCount', JSON.stringify({
-            total: total,
-            remaining: remaining
-          }));
-        } else {
-          groceryCounter.textContent = "No items on your list";
+      // Share button functionality (you can add this to the UI)
+      function showShareOptions() {
+        if (!currentUserEmail || !currentSharedCode) {
+          alert('Please log in to share your grocery list.');
+          return;
         }
+        
+        const sharedList = sharedLists[currentSharedCode];
+        if (!sharedList) {
+          alert('No active grocery list found.');
+          return;
+        }
+        
+        alert('Your sharing code is: ' + currentSharedCode + '\n\nShare this code with family members so they can access your grocery list when they log in.');
       }
+      
+      // Initialize the UI
+      checkLoggedInStatus();
       
       // Fallback to localStorage if not logged in or offline
       const groceryCounter = document.getElementById('groceryCounter');
@@ -873,6 +932,15 @@
       } else {
         groceryCounter.textContent = "No items on your list";
       }
+      
+      // Make share function globally available for other pages
+      window.showShareOptions = showShareOptions;
+      window.getCurrentSharedCode = function() {
+        return currentSharedCode;
+      };
+      window.getCurrentUserEmail = function() {
+        return currentUserEmail;
+      };
     });
   </script>
 </body>

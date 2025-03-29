@@ -622,20 +622,6 @@
   </div>
 
   <script>
-    // Initialize Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyD6x5v9TTR3z7xwYGcZMmJNAY3-Z9qh0aE",
-      authDomain: "grocery-meal-planner-app.firebaseapp.com",
-      projectId: "grocery-meal-planner-app",
-      storageBucket: "grocery-meal-planner-app.appspot.com",
-      messagingSenderId: "654025936932",
-      appId: "1:654025936932:web:8a61d7cfc8b68ba86aabce"
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    
     document.addEventListener('DOMContentLoaded', function() {
       const addButton = document.getElementById('addButton');
       const addForm = document.getElementById('addForm');
@@ -649,258 +635,28 @@
       const addAllFrequent = document.getElementById('addAllFrequent');
       const shareList = document.getElementById('shareList');
       
-      let currentUser = null;
-      let listId = null;
-      let unsubscribeListener = null;
+      // Get current user info
+      const currentUserEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
+      const currentSharedCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
       
-      // Check if user is authenticated
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          currentUser = user;
-          // Check if user has an active list
-          checkForUserList(user.uid);
-        } else {
-          // Use local storage if not logged in
-          loadLocalGroceryList();
-        }
-      });
+      // Initialize shared lists from localStorage
+      const sharedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
       
       // Share button functionality
       shareList.addEventListener('click', function() {
-        if (!currentUser) {
-          alert('Please log in to share your grocery list');
+        if (!currentUserEmail || !currentSharedCode) {
+          alert('Please log in to share your grocery list.');
           return;
         }
         
-        // Create share modal if it doesn't exist
-        let shareModal = document.getElementById('shareModal');
-        if (!shareModal) {
-          shareModal = document.createElement('div');
-          shareModal.id = 'shareModal';
-          shareModal.className = 'share-modal';
-          
-          const modalContent = `
-            <div class="share-container">
-              <h3>Share Grocery List</h3>
-              <div class="shared-users" id="sharedUsers">
-                <!-- Shared users will be displayed here -->
-              </div>
-              <div class="form-group">
-                <label for="shareEmail">Email to share with</label>
-                <input type="email" id="shareEmail" placeholder="Enter email">
-              </div>
-              <div class="form-buttons">
-                <button class="btn btn-secondary" id="cancelShare">Cancel</button>
-                <button class="btn btn-primary" id="confirmShare">Share</button>
-              </div>
-            </div>
-          `;
-          
-          shareModal.innerHTML = modalContent;
-          document.body.appendChild(shareModal);
-          
-          // Add event listeners
-          document.getElementById('cancelShare').addEventListener('click', function() {
-            shareModal.classList.remove('active');
-          });
-          
-          document.getElementById('confirmShare').addEventListener('click', function() {
-            const email = document.getElementById('shareEmail').value;
-            if (email) {
-              shareGroceryList(email);
-            }
-          });
+        const sharedList = sharedLists[currentSharedCode];
+        if (!sharedList) {
+          alert('No active grocery list found.');
+          return;
         }
         
-        // Show modal and load current shares
-        shareModal.classList.add('active');
-        loadSharedUsers();
+        alert('Your sharing code is: ' + currentSharedCode + '\n\nShare this code with family members so they can access your grocery list when they log in.');
       });
-      
-      // Load users the list is shared with
-      function loadSharedUsers() {
-        if (!listId) return;
-        
-        const sharedUsersDiv = document.getElementById('sharedUsers');
-        if (!sharedUsersDiv) return;
-        
-        sharedUsersDiv.innerHTML = '<div class="loading">Loading...</div>';
-        
-        db.collection('groceryLists').doc(listId).get()
-          .then(doc => {
-            if (doc.exists) {
-              const data = doc.data();
-              const sharedWith = data.sharedWith || [];
-              
-              if (sharedWith.length <= 1) {
-                sharedUsersDiv.innerHTML = '<p>This list is not shared with anyone.</p>';
-                return;
-              }
-              
-              // Get user details for each UID
-              let promises = [];
-              sharedWith.forEach(uid => {
-                if (uid !== currentUser.uid) {
-                  promises.push(db.collection('users').doc(uid).get());
-                }
-              });
-              
-              Promise.all(promises).then(results => {
-                sharedUsersDiv.innerHTML = '';
-                
-                results.forEach(userDoc => {
-                  if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    const userDiv = document.createElement('div');
-                    userDiv.className = 'shared-user';
-                    userDiv.innerHTML = `
-                      <span>${userData.email}</span>
-                      <button class="shared-user-remove" data-uid="${userDoc.id}">×</button>
-                    `;
-                    sharedUsersDiv.appendChild(userDiv);
-                  }
-                });
-                
-                // Add event listeners to remove buttons
-                document.querySelectorAll('.shared-user-remove').forEach(btn => {
-                  btn.addEventListener('click', function() {
-                    const uid = this.getAttribute('data-uid');
-                    removeSharedUser(uid);
-                  });
-                });
-              });
-            }
-          });
-      }
-      
-      // Remove user from shared list
-      function removeSharedUser(uid) {
-        if (!listId || !currentUser) return;
-        
-        db.collection('groceryLists').doc(listId).update({
-          sharedWith: firebase.firestore.FieldValue.arrayRemove(uid)
-        })
-        .then(() => {
-          loadSharedUsers(); // Refresh the list
-        })
-        .catch(error => {
-          console.error("Error removing user: ", error);
-          alert("Could not remove user: " + error.message);
-        });
-      }
-      
-      // Share grocery list with another user
-      function shareGroceryList(email) {
-        if (!listId || !currentUser) return;
-        
-        // Find user by email
-        db.collection('users').where('email', '==', email).get()
-          .then(snapshot => {
-            if (snapshot.empty) {
-              alert('No user found with that email. They need to sign up first.');
-              return;
-            }
-            
-            const userDoc = snapshot.docs[0];
-            const userId = userDoc.id;
-            
-            // Don't share with self
-            if (userId === currentUser.uid) {
-              alert("You can't share the list with yourself.");
-              return;
-            }
-            
-            // Add user to shared list
-            return db.collection('groceryLists').doc(listId).update({
-              sharedWith: firebase.firestore.FieldValue.arrayUnion(userId)
-            });
-          })
-          .then(() => {
-            document.getElementById('shareEmail').value = '';
-            alert(`List shared with ${email} successfully!`);
-            loadSharedUsers();
-          })
-          .catch(error => {
-            console.error("Error sharing list: ", error);
-            alert("Could not share list: " + error.message);
-          });
-      }
-      
-      // Check if user has an active list or create one
-      function checkForUserList(userId) {
-        db.collection('groceryLists')
-          .where('owner', '==', userId)
-          .limit(1)
-          .get()
-          .then(snapshot => {
-            if (snapshot.empty) {
-              // Create new list for user
-              createNewList(userId);
-            } else {
-              // Use existing list
-              const doc = snapshot.docs[0];
-              listId = doc.id;
-              subscribeToListChanges(listId);
-            }
-          })
-          .catch(error => {
-            console.error("Error checking for user list: ", error);
-            // Fallback to local storage
-            loadLocalGroceryList();
-          });
-      }
-      
-      // Create a new grocery list for user
-      function createNewList(userId) {
-        // First try to get local items
-        const localItems = JSON.parse(localStorage.getItem('groceryList') || '[]');
-        const items = localItems.map(item => ({
-          text: item.text,
-          checked: item.checked
-        }));
-        
-        db.collection('groceryLists').add({
-          owner: userId,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          sharedWith: [userId], // Include owner in shared list
-          items: items
-        })
-        .then(docRef => {
-          listId = docRef.id;
-          subscribeToListChanges(listId);
-        })
-        .catch(error => {
-          console.error("Error creating new list: ", error);
-          // Fallback to local storage
-          loadLocalGroceryList();
-        });
-      }
-      
-      // Subscribe to real-time updates
-      function subscribeToListChanges(id) {
-        if (unsubscribeListener) {
-          unsubscribeListener();
-        }
-        
-        unsubscribeListener = db.collection('groceryLists').doc(id)
-          .onSnapshot(doc => {
-            if (doc.exists) {
-              const data = doc.data();
-              if (data.items) {
-                // Update UI with items from Firestore
-                renderGroceryItems(data.items);
-                
-                // Also update localStorage for offline access
-                localStorage.setItem('groceryList', JSON.stringify(data.items));
-                
-                // Update counter on home page
-                updateHomePageCounter(data.items);
-              }
-            }
-          }, error => {
-            console.error("Error listening to list changes: ", error);
-          });
-      }
       
       // Check if there are ingredients added from recipes
       const selectedIngredients = JSON.parse(localStorage.getItem('selectedIngredients') || '[]');
@@ -1029,7 +785,7 @@
         }, 1500);
       });
       
-      // Add grocery item and save to database/localStorage
+      // Add grocery item and save to shared list
       function addGroceryItem(name, quantity) {
         // First add to UI
         const item = document.createElement('div');
@@ -1056,7 +812,7 @@
         document.getElementById('itemQuantity').value = '';
       }
       
-      // Save grocery list to Firestore and/or localStorage
+      // Save grocery list to shared list
       function saveGroceryListState() {
         // Get current list items
         const groceryData = [];
@@ -1069,25 +825,14 @@
           });
         });
         
-        // Save to Firestore if logged in
-        if (currentUser && listId) {
-          db.collection('groceryLists').doc(listId).update({
-            items: groceryData,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          })
-          .catch(error => {
-            console.error("Error updating list: ", error);
-            // Fallback to localStorage
-            saveToLocalStorage(groceryData);
-          });
-        } else {
-          // Save to localStorage if not logged in
-          saveToLocalStorage(groceryData);
+        // Save to shared list if logged in
+        if (currentUserEmail && currentSharedCode && sharedLists[currentSharedCode]) {
+          sharedLists[currentSharedCode].items = groceryData;
+          sharedLists[currentSharedCode].updatedAt = new Date().toISOString();
+          localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
         }
-      }
-      
-      // Save to localStorage as fallback
-      function saveToLocalStorage(groceryData) {
+        
+        // Always save to localStorage for offline access
         localStorage.setItem('groceryList', JSON.stringify(groceryData));
         updateHomePageCounter(groceryData);
       }
@@ -1131,13 +876,40 @@
         });
       }
       
-      // Load grocery list from localStorage
-      function loadLocalGroceryList() {
-        const savedList = localStorage.getItem('groceryList');
-        if (savedList) {
-          const groceryData = JSON.parse(savedList);
-          renderGroceryItems(groceryData);
+      // Load grocery list
+      function loadGroceryList() {
+        // First check if there's a shared list
+        if (currentUserEmail && currentSharedCode && sharedLists[currentSharedCode]) {
+          renderGroceryItems(sharedLists[currentSharedCode].items || []);
+        } else {
+          // Fall back to local storage
+          const savedList = localStorage.getItem('groceryList');
+          if (savedList) {
+            const groceryData = JSON.parse(savedList);
+            renderGroceryItems(groceryData);
+          }
         }
+      }
+      
+      // Initialize
+      loadGroceryList();
+      
+      // Set up periodic synchronization for shared lists
+      if (currentUserEmail && currentSharedCode) {
+        setInterval(() => {
+          // Check if there's an update to the shared list
+          const updatedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
+          if (updatedLists[currentSharedCode] && 
+              (!sharedLists[currentSharedCode] || 
+               updatedLists[currentSharedCode].updatedAt !== sharedLists[currentSharedCode].updatedAt)) {
+            
+            // Update local copy
+            Object.assign(sharedLists, updatedLists);
+            
+            // Update UI
+            renderGroceryItems(updatedLists[currentSharedCode].items || []);
+          }
+        }, 2000); // Check every 2 seconds
       }
     });
   </script>
