@@ -394,7 +394,7 @@
         <h3>Grocery List</h3>
         <div class="recent-item">
           <div class="recent-icon">🛒</div>
-          <div>6 items on your list</div>
+          <div id="groceryCounter">0 items on your list</div>
         </div>
       </div>
     </div>
@@ -524,6 +524,20 @@
           loginModal.classList.remove('active');
         }
       });
+      
+      // Update grocery counter on home page
+      const groceryCounter = document.getElementById('groceryCounter');
+      const groceryCount = JSON.parse(localStorage.getItem('groceryCount') || '{"total":0,"remaining":0}');
+      
+      if (groceryCount.total > 0) {
+        if (groceryCount.remaining === 0) {
+          groceryCounter.textContent = `All ${groceryCount.total} items checked off`;
+        } else {
+          groceryCounter.textContent = `${groceryCount.remaining} of ${groceryCount.total} items remaining`;
+        }
+      } else {
+        groceryCounter.textContent = "No items on your list";
+      }
     });
   </script>
 </body>

@@ -158,6 +158,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background-color: white;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     
     .meal-item:last-child {
@@ -181,12 +185,17 @@
     .add-meal {
       background-color: #f8f9fa;
       border: 1px dashed #ccc;
-      border-radius: 4px;
-      padding: 0.5rem;
+      border-radius: 6px;
+      padding: 0.75rem;
       text-align: center;
       color: #666;
       cursor: pointer;
-      margin: 0.5rem;
+      margin: 0.5rem 0;
+      transition: background-color 0.2s;
+    }
+    
+    .add-meal:hover {
+      background-color: #e9ecef;
     }
     
     /* Add meal modal */
@@ -337,6 +346,17 @@
       border: none;
       cursor: pointer;
       z-index: 10;
+    }
+    
+    /* Improve UI for mobile view */
+    .day-name {
+      font-weight: 600;
+    }
+    
+    /* Fix recipe item selection in modal */
+    .recipe-item.selected {
+      background-color: #e8f5e9;
+      border-left: 3px solid #4CAF50;
     }
   </style>
 </head>
@@ -656,6 +676,21 @@
       const savedMealPlan = localStorage.getItem('mealPlan');
       if (savedMealPlan) {
         mealPlan = JSON.parse(savedMealPlan);
+      }
+      
+      // Check for meal param in URL (from recipe page)
+      const urlParams = new URLSearchParams(window.location.search);
+      const mealToAdd = urlParams.get('add');
+      
+      if (mealToAdd) {
+        // Add the meal to today
+        const today = new Date();
+        const dateStr = formatDate(today, 'iso');
+        
+        addMealToDay(dateStr, decodeURIComponent(mealToAdd));
+        
+        // Remove the parameter to prevent duplicate additions on refresh
+        window.history.replaceState({}, document.title, 'meal-plan.html');
       }
     });
   </script>

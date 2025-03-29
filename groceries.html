@@ -321,6 +321,45 @@
       const saveItem = document.getElementById('saveItem');
       const groceryList = document.getElementById('groceryList');
       
+      // Check if there are ingredients added from recipes
+      const selectedIngredients = JSON.parse(localStorage.getItem('selectedIngredients') || '[]');
+      if (selectedIngredients.length > 0) {
+        // Process ingredients from recipes
+        selectedIngredients.forEach(ingredient => {
+          // Extract name and quantity if possible
+          let name = ingredient;
+          let quantity = '';
+          
+          if (ingredient.includes(' - ')) {
+            const parts = ingredient.split(' - ');
+            name = parts[0];
+            quantity = parts[1];
+          }
+          
+          // Determine category based on ingredient name (basic categorization)
+          let category = 'Other';
+          const lowerName = name.toLowerCase();
+          
+          if (/carrot|broccoli|spinach|lettuce|pepper|onion|tomato|potato|cucumber|celery/.test(lowerName)) {
+            category = 'Produce';
+          } else if (/milk|cheese|yogurt|cream|butter/.test(lowerName)) {
+            category = 'Dairy';
+          } else if (/chicken|beef|pork|steak|fish|salmon|shrimp|meat/.test(lowerName)) {
+            category = 'Meat';
+          } else if (/rice|pasta|flour|sugar|oil|cereal|bean|canned|sauce|spice|herb/.test(lowerName)) {
+            category = 'Pantry';
+          } else if (/frozen|ice cream/.test(lowerName)) {
+            category = 'Frozen';
+          }
+          
+          // Add to grocery list
+          addGroceryItem(name, category, quantity);
+        });
+        
+        // Clear the selected ingredients
+        localStorage.removeItem('selectedIngredients');
+      }
+      
       // Show/hide add form
       addButton.addEventListener('click', function() {
         addForm.classList.add('active');
@@ -338,8 +377,14 @@
           const item = e.target.closest('.grocery-item');
           if (e.target.checked) {
             item.classList.add('checked');
+            
+            // Save checked state
+            saveGroceryListState();
           } else {
             item.classList.remove('checked');
+            
+            // Save checked state
+            saveGroceryListState();
           }
         }
       });
@@ -353,6 +398,9 @@
         if (name) {
           // Create new item
           addGroceryItem(name, category, quantity);
+          
+          // Save grocery list
+          saveGroceryListState();
           
           // Reset and hide form
           resetForm();
@@ -380,6 +428,9 @@
         
         // Add to category
         categorySection.appendChild(item);
+        
+        // Save grocery list
+        saveGroceryListState();
       }
       
       function findOrCreateCategory(categoryName) {
@@ -411,6 +462,101 @@
         document.getElementById('itemQuantity').value = '';
         document.getElementById('itemCategory').selectedIndex = 0;
       }
+      
+      function saveGroceryListState() {
+        const groceryData = [];
+        
+        // Get all categories
+        const categories = groceryList.querySelectorAll('.category');
+        categories.forEach(category => {
+          const categoryName = category.querySelector('.category-title').textContent;
+          
+          // Get all items in this category
+          const items = category.querySelectorAll('.grocery-item');
+          items.forEach(item => {
+            groceryData.push({
+              category: categoryName,
+              text: item.querySelector('div').textContent,
+              checked: item.querySelector('.grocery-checkbox').checked
+            });
+          });
+        });
+        
+        // Save to localStorage
+        localStorage.setItem('groceryList', JSON.stringify(groceryData));
+        
+        // Update counter on home page
+        updateHomePageCounter(groceryData);
+      }
+      
+      function updateHomePageCounter(groceryData) {
+        const totalItems = groceryData.length;
+        const remainingItems = groceryData.filter(item => !item.checked).length;
+        
+        // Save for home page to display
+        localStorage.setItem('groceryCount', JSON.stringify({
+          total: totalItems,
+          remaining: remainingItems
+        }));
+      }
+      
+      // Load saved grocery list
+      function loadGroceryList() {
+        const savedList = localStorage.getItem('groceryList');
+        if (savedList) {
+          const groceryData = JSON.parse(savedList);
+          
+          // Clear current list
+          groceryList.innerHTML = '';
+          
+          // Group by category
+          const categories = {};
+          groceryData.forEach(item => {
+            if (!categories[item.category]) {
+              categories[item.category] = [];
+            }
+            categories[item.category].push(item);
+          });
+          
+          // Create each category and its items
+          Object.keys(categories).forEach(categoryName => {
+            const categorySection = document.createElement('div');
+            categorySection.className = 'category';
+            
+            const title = document.createElement('h3');
+            title.className = 'category-title';
+            title.textContent = categoryName;
+            
+            categorySection.appendChild(title);
+            
+            // Add items to this category
+            categories[categoryName].forEach(item => {
+              const itemElement = document.createElement('div');
+              itemElement.className = 'grocery-item';
+              if (item.checked) {
+                itemElement.classList.add('checked');
+              }
+              
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.className = 'grocery-checkbox';
+              checkbox.checked = item.checked;
+              
+              const text = document.createElement('div');
+              text.textContent = item.text;
+              
+              itemElement.appendChild(checkbox);
+              itemElement.appendChild(text);
+              categorySection.appendChild(itemElement);
+            });
+            
+            groceryList.appendChild(categorySection);
+          });
+        }
+      }
+      
+      // Initialize
+      loadGroceryList();
     });
   </script>
 </body>

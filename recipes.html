@@ -355,6 +355,12 @@
       width: 100%;
       text-align: center;
     }
+    
+    .select-all-container {
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #eee;
+    }
   </style>
 </head>
 <body>
@@ -410,6 +416,12 @@
       <div class="recipe-detail-content">
         <div class="recipe-detail-section">
           <h3>Ingredients</h3>
+          <div class="select-all-container">
+            <label class="ingredient-item">
+              <input type="checkbox" id="selectAllIngredients" class="ingredient-checkbox">
+              <span><strong>Select All Ingredients</strong></span>
+            </label>
+          </div>
           <ul class="ingredient-list" id="ingredientsList">
             <!-- Ingredients will be dynamically generated -->
           </ul>
@@ -622,6 +634,28 @@
           li.appendChild(text);
           ingredientsList.appendChild(li);
         });
+        
+        // Set up Select All functionality
+        const selectAllCheckbox = document.getElementById('selectAllIngredients');
+        const ingredientCheckboxes = document.querySelectorAll('.ingredient-list .ingredient-checkbox');
+        
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.addEventListener('change', function() {
+          ingredientCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+          });
+        });
+        
+        // Update Select All checkbox when individual checkboxes change
+        ingredientCheckboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', updateSelectAllCheckbox);
+        });
+        
+        function updateSelectAllCheckbox() {
+          const checkboxes = document.querySelectorAll('.ingredient-list .ingredient-checkbox');
+          const checkedBoxes = document.querySelectorAll('.ingredient-list .ingredient-checkbox:checked');
+          selectAllCheckbox.checked = checkboxes.length === checkedBoxes.length;
+        }
         
         // Generate instructions
         const instructionsList = document.getElementById('instructionsList');
