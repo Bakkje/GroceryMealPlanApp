@@ -9,6 +9,10 @@
   <link rel="icon" href="app-icon.svg">
   <link rel="apple-touch-icon" href="app-icon.png">
   <link rel="stylesheet" href="./src/styles/main.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <style>
     /* Base styles */
     * {
@@ -500,7 +504,7 @@
   <!-- Login Modal -->
   <div class="login-modal" id="loginModal">
     <div class="login-container">
-      <h2>Log In</h2>
+      <h2 id="authTitle">Log In</h2>
       <form id="loginForm">
         <div class="form-group">
           <label for="email">Email</label>
@@ -516,7 +520,10 @@
         </div>
         <div class="login-buttons">
           <button type="button" class="btn btn-secondary" id="cancelLogin">Cancel</button>
-          <button type="submit" class="btn btn-primary">Log In</button>
+          <button type="submit" class="btn btn-primary" id="authSubmit">Log In</button>
+        </div>
+        <div class="auth-switch">
+          <p>Don't have an account? <a href="#" id="switchToSignup">Sign up</a></p>
         </div>
       </form>
     </div>
@@ -631,6 +638,20 @@
       });
     }
     
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6x5v9TTR3z7xwYGcZMmJNAY3-Z9qh0aE",
+      authDomain: "grocery-meal-planner-app.firebaseapp.com",
+      projectId: "grocery-meal-planner-app",
+      storageBucket: "grocery-meal-planner-app.appspot.com",
+      messagingSenderId: "654025936932",
+      appId: "1:654025936932:web:8a61d7cfc8b68ba86aabce"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
     // Login functionality
     document.addEventListener('DOMContentLoaded', function() {
       const loginButton = document.getElementById('loginButton');
@@ -641,6 +662,29 @@
       const userAvatar = document.getElementById('userAvatar');
       const userName = document.getElementById('userName');
       const addNewBtn = document.getElementById('addNewBtn');
+      const authTitle = document.getElementById('authTitle');
+      const authSubmit = document.getElementById('authSubmit');
+      const switchToSignup = document.getElementById('switchToSignup');
+      
+      let isSignupMode = false;
+      
+      // Switch between login and signup
+      switchToSignup.addEventListener('click', function(e) {
+        e.preventDefault();
+        isSignupMode = !isSignupMode;
+        
+        if (isSignupMode) {
+          authTitle.textContent = 'Sign Up';
+          authSubmit.textContent = 'Sign Up';
+          switchToSignup.textContent = 'Log in';
+          document.querySelector('.auth-switch p').textContent = 'Already have an account? ';
+        } else {
+          authTitle.textContent = 'Log In';
+          authSubmit.textContent = 'Log In';
+          switchToSignup.textContent = 'Sign up';
+          document.querySelector('.auth-switch p').textContent = "Don't have an account? ";
+        }
+      });
       
       // Add New menu
       addNewBtn.addEventListener('click', function(e) {
@@ -659,22 +703,29 @@
         }
       });
       
-      // Check if user is already logged in
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      const savedEmail = localStorage.getItem('userEmail');
-      
-      if (isLoggedIn === 'true' && savedEmail) {
-        loginButton.style.display = 'none';
-        userInfo.classList.add('logged-in');
-        
-        // Set user avatar initial and name
-        const initial = savedEmail.charAt(0).toUpperCase();
-        userAvatar.textContent = initial;
-        
-        // Extract name from email
-        const name = savedEmail.split('@')[0];
-        userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-      }
+      // Check if user is authenticated via Firebase
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          // User is signed in
+          loginButton.style.display = 'none';
+          userInfo.classList.add('logged-in');
+          
+          // Set user avatar initial and name
+          const initial = user.email.charAt(0).toUpperCase();
+          userAvatar.textContent = initial;
+          
+          // Extract name from email or use displayName
+          const name = user.displayName || user.email.split('@')[0];
+          userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+          
+          // Load shared data
+          loadUserData(user.uid);
+        } else {
+          // User is signed out
+          loginButton.style.display = 'block';
+          userInfo.classList.remove('logged-in');
+        }
+      });
       
       // Show login modal
       loginButton.addEventListener('click', function() {
@@ -686,7 +737,7 @@
         loginModal.classList.remove('active');
       });
       
-      // Handle login form submission
+      // Handle login/signup form submission
       loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -694,35 +745,122 @@
         const password = document.getElementById('password').value;
         const rememberMe = document.getElementById('rememberMe').checked;
         
-        // Simple validation
-        if (email && password) {
-          // Store login state
-          if (rememberMe) {
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('userEmail', email);
-          } else {
-            sessionStorage.setItem('isLoggedIn', 'true');
-            sessionStorage.setItem('userEmail', email);
-          }
+        if (isSignupMode) {
+          // Sign up
+          auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+              const user = userCredential.user;
+              console.log('New user created:', user);
+              
+              // Create user document in Firestore
+              createUserData(user.uid, email);
+              
+              // Set persistence
+              setPersistence(rememberMe);
+              
+              // Close modal
+              loginModal.classList.remove('active');
+            })
+            .catch((error) => {
+              alert('Sign up error: ' + error.message);
+            });
+        } else {
+          // Log in
+          auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+              const user = userCredential.user;
+              console.log('User logged in:', user);
+              
+              // Set persistence
+              setPersistence(rememberMe);
+              
+              // Close modal
+              loginModal.classList.remove('active');
+            })
+            .catch((error) => {
+              alert('Login error: ' + error.message);
+            });
+        }
+      });
+      
+      // Set user persistence
+      function setPersistence(rememberMe) {
+        const persistence = rememberMe ? 
+          firebase.auth.Auth.Persistence.LOCAL : 
+          firebase.auth.Auth.Persistence.SESSION;
           
-          // Update UI
-          loginButton.style.display = 'none';
-          userInfo.classList.add('logged-in');
-          
-          // Set user avatar initial and name
-          const initial = email.charAt(0).toUpperCase();
-          userAvatar.textContent = initial;
-          
-          // Extract name from email
-          const name = email.split('@')[0];
-          userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-          
-          // Close modal
-          loginModal.classList.remove('active');
+        auth.setPersistence(persistence)
+          .catch((error) => {
+            console.error('Persistence error:', error);
+          });
+      }
+      
+      // Create user data in Firestore
+      function createUserData(userId, email) {
+        db.collection('users').doc(userId).set({
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          sharedLists: []
+        })
+        .catch((error) => {
+          console.error('Error creating user data:', error);
+        });
+      }
+      
+      // Load user data from Firestore
+      function loadUserData(userId) {
+        // Load grocery list from Firestore
+        db.collection('groceryLists')
+          .where('sharedWith', 'array-contains', userId)
+          .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added' || change.type === 'modified') {
+                const listData = change.doc.data();
+                // Store in localStorage for offline access
+                localStorage.setItem('groceryList', JSON.stringify(listData.items || []));
+                updateGroceryCounter(listData.items || []);
+              }
+            });
+          }, (error) => {
+            console.error('Error loading grocery lists:', error);
+          });
+      }
+      
+      // User logout
+      userInfo.addEventListener('click', function() {
+        if (confirm('Do you want to log out?')) {
+          auth.signOut().then(() => {
+            console.log('User signed out');
+          }).catch((error) => {
+            console.error('Error signing out:', error);
+          });
         }
       });
       
       // Update grocery counter on home page
+      function updateGroceryCounter(groceryItems = []) {
+        const groceryCounter = document.getElementById('groceryCounter');
+        const total = groceryItems.length;
+        const remaining = groceryItems.filter(item => !item.checked).length;
+        
+        if (total > 0) {
+          if (remaining === 0) {
+            groceryCounter.textContent = `All ${total} items checked off`;
+          } else {
+            groceryCounter.textContent = `${remaining} of ${total} items remaining`;
+          }
+          
+          // Store for offline usage
+          localStorage.setItem('groceryCount', JSON.stringify({
+            total: total,
+            remaining: remaining
+          }));
+        } else {
+          groceryCounter.textContent = "No items on your list";
+        }
+      }
+      
+      // Fallback to localStorage if not logged in or offline
       const groceryCounter = document.getElementById('groceryCounter');
       const groceryCount = JSON.parse(localStorage.getItem('groceryCount') || '{"total":0,"remaining":0}');
       
