@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grocery & Meal Planner</title>
-  <meta name="description" content="Plan your meals and manage your grocery shopping in one place">
-  <meta name="theme-color" content="#4CAF50">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <meta name="theme-color" content="#4CAF50">
+  <link rel="icon" href="app-icon.svg">
+  <link rel="apple-touch-icon" href="app-icon.png">
   <link rel="stylesheet" href="./src/styles/main.css">
   <style>
     /* Additional inline styles to ensure the static version works */
@@ -220,13 +220,165 @@
     a, button, .btn {
       text-decoration: none !important;
     }
+    
+    /* Login modal styles */
+    .login-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .login-modal.active {
+      display: flex;
+    }
+    
+    .login-container {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .login-container h2 {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: #4CAF50;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    
+    .login-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+    }
+    
+    .remember-me {
+      display: flex;
+      align-items: center;
+      margin-top: 1rem;
+    }
+    
+    .remember-me input {
+      margin-right: 0.5rem;
+    }
+    
+    /* User info display */
+    .user-info {
+      display: none;
+      align-items: center;
+      margin-left: auto;
+      padding: 0 1rem;
+    }
+    
+    .user-info.logged-in {
+      display: flex;
+    }
+    
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.5rem;
+      font-weight: bold;
+    }
+    
+    /* Button styles */
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #3d8b40;
+    }
+    
+    .btn-secondary {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e0e0e0;
+    }
+    
+    #loginButton {
+      margin-left: 1rem;
+    }
   </style>
 </head>
 <body>
+  <!-- Login Modal -->
+  <div class="login-modal" id="loginModal">
+    <div class="login-container">
+      <h2>Log In</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" required>
+        </div>
+        <div class="remember-me">
+          <input type="checkbox" id="rememberMe" checked>
+          <label for="rememberMe">Remember me</label>
+        </div>
+        <div class="login-buttons">
+          <button type="button" class="btn btn-secondary" id="cancelLogin">Cancel</button>
+          <button type="submit" class="btn btn-primary">Log In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="root">
     <!-- Static Home Page Content -->
     <div>
-      <header class="navbar">
+      <!-- Header -->
+      <header class="header">
         <div style="width: 100%; position: relative;">
           <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5))"></div>
           <img src="https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=1200&auto=format&fit=crop" alt="Fresh food banner" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
@@ -236,9 +388,14 @@
               <ul class="nav-links">
                 <li><a href="#home">Home</a></li>
                 <li><a href="#groceries">Groceries</a></li>
-                <li><a href="#meals">Meal Plan</a></li>
+                <li><a href="#meal-plan">Meal Plan</a></li>
                 <li><a href="#recipes">Recipes</a></li>
               </ul>
+              <div class="user-info" id="userInfo">
+                <div class="user-avatar" id="userAvatar">J</div>
+                <span id="userName">Jelle</span>
+              </div>
+              <button class="btn btn-primary" id="loginButton">Log In</button>
             </nav>
           </div>
         </div>
@@ -2089,6 +2246,97 @@
       deferredPrompt = null;
       console.log('App was installed');
     });
+  </script>
+  
+  <script>
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(error => {
+            console.log('ServiceWorker registration failed: ', error);
+          });
+      });
+    }
+    
+    // Login functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginButton = document.getElementById('loginButton');
+      const loginModal = document.getElementById('loginModal');
+      const cancelLogin = document.getElementById('cancelLogin');
+      const loginForm = document.getElementById('loginForm');
+      const userInfo = document.getElementById('userInfo');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+      
+      // Check if user is already logged in
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      const savedEmail = localStorage.getItem('userEmail');
+      
+      if (isLoggedIn === 'true' && savedEmail) {
+        loginButton.style.display = 'none';
+        userInfo.classList.add('logged-in');
+        
+        // Set user avatar initial and name
+        const initial = savedEmail.charAt(0).toUpperCase();
+        userAvatar.textContent = initial;
+        
+        // Extract name from email
+        const name = savedEmail.split('@')[0];
+        userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+      }
+      
+      // Show login modal
+      loginButton.addEventListener('click', function() {
+        loginModal.classList.add('active');
+      });
+      
+      // Hide login modal
+      cancelLogin.addEventListener('click', function() {
+        loginModal.classList.remove('active');
+      });
+      
+      // Handle login form submission
+      loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const rememberMe = document.getElementById('rememberMe').checked;
+        
+        // Simple validation
+        if (email && password) {
+          // Store login state
+          if (rememberMe) {
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userEmail', email);
+          } else {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('userEmail', email);
+          }
+          
+          // Update UI
+          loginButton.style.display = 'none';
+          userInfo.classList.add('logged-in');
+          
+          // Set user avatar initial and name
+          const initial = email.charAt(0).toUpperCase();
+          userAvatar.textContent = initial;
+          
+          // Extract name from email
+          const name = email.split('@')[0];
+          userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+          
+          // Close modal
+          loginModal.classList.remove('active');
+        }
+      });
+    });
+    
+    // ... existing JavaScript code ...
   </script>
 </body>
 </html>

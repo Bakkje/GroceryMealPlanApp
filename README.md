@@ -1,14 +1,27 @@
 # Grocery & Meal Planner App
 
-A web application for managing your grocery lists and meal planning in one place.
+A simple web application for planning meals and managing grocery lists.
 
 ## Features
 
 - Create and manage grocery lists
-- Plan meals for days or weeks
-- Track your pantry inventory
-- Generate shopping lists based on meal plans
-- Save favorite recipes
+- Plan meals for the week
+- Save and view recipes
+- Mobile-friendly design for use on any device
+
+## How to Use
+
+1. **Grocery Lists**: Create, edit, and check off items from your grocery list
+2. **Meal Planning**: Schedule meals for each day of the week
+3. **Recipes**: Save your favorite recipes and add ingredients to your grocery list
+
+## Technology
+
+This app is built with HTML, CSS, and JavaScript, with no external dependencies required.
+
+## About
+
+Created by Bakkje (Jelle Bakker)
 
 ## Getting Started
 
