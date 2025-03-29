@@ -403,6 +403,16 @@
       background-color: rgba(76, 175, 80, 0.1);
     }
     
+    .add-all-btn {
+      margin-right: 10px;
+      background-color: rgba(76, 175, 80, 0.1) !important;
+      font-weight: 500;
+    }
+    
+    .add-all-btn:hover {
+      background-color: rgba(76, 175, 80, 0.2) !important;
+    }
+    
     .frequent-item {
       display: flex;
       align-items: center;
@@ -431,17 +441,6 @@
         <div class="form-group">
           <label for="itemName">Item Name</label>
           <input type="text" id="itemName" placeholder="Enter item name">
-        </div>
-        <div class="form-group">
-          <label for="itemCategory">Category</label>
-          <select id="itemCategory">
-            <option value="Produce">Produce</option>
-            <option value="Dairy">Dairy</option>
-            <option value="Meat">Meat</option>
-            <option value="Pantry">Pantry</option>
-            <option value="Frozen">Frozen</option>
-            <option value="Other">Other</option>
-          </select>
         </div>
         <div class="form-group">
           <label for="itemQuantity">Quantity</label>
@@ -478,7 +477,10 @@
       <div class="frequent-items" id="frequentItems">
         <div class="frequent-items-title">
           <span>Frequently Used Items</span>
-          <button id="editFrequent">Edit</button>
+          <div>
+            <button id="addAllFrequent" class="add-all-btn">Add All</button>
+            <button id="editFrequent">Edit</button>
+          </div>
         </div>
         <div class="frequent-item" data-name="Milk" data-quantity="1 gallon">Milk</div>
         <div class="frequent-item" data-name="Eggs" data-quantity="1 dozen">Eggs</div>
@@ -522,6 +524,7 @@
       const clearList = document.getElementById('clearList');
       const frequentItems = document.querySelectorAll('.frequent-item');
       const editFrequent = document.getElementById('editFrequent');
+      const addAllFrequent = document.getElementById('addAllFrequent');
       
       // Check if there are ingredients added from recipes
       const selectedIngredients = JSON.parse(localStorage.getItem('selectedIngredients') || '[]');
@@ -638,6 +641,21 @@
         }
       });
       
+      // Add all frequent items at once
+      addAllFrequent.addEventListener('click', function() {
+        frequentItems.forEach(item => {
+          const name = item.getAttribute('data-name');
+          const quantity = item.getAttribute('data-quantity');
+          addGroceryItem(name, quantity);
+        });
+        
+        // Show feedback (optional)
+        addAllFrequent.textContent = "Added!";
+        setTimeout(() => {
+          addAllFrequent.textContent = "Add All";
+        }, 1500);
+      });
+      
       function addGroceryItem(name, quantity) {
         // Create item
         const item = document.createElement('div');
@@ -663,7 +681,6 @@
       function resetForm() {
         document.getElementById('itemName').value = '';
         document.getElementById('itemQuantity').value = '';
-        document.getElementById('itemCategory').selectedIndex = 0;
       }
       
       function saveGroceryListState() {
