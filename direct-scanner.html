@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grocery & Meal Planner App - Android Installation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+    .instructions {
+      text-align: left;
+      background-color: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #4CAF50;
+    }
+    .highlight {
+      background-color: #e8f5e9;
+      padding: 5px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .steps {
+      text-align: left;
+    }
+    .option {
+      margin-bottom: 30px;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Get Your Grocery & Meal Planner App on Your Phone</h1>
+  
+  <div class="option">
+    <h2>Option 1: Use a Simple Server on Your Computer</h2>
+    <p>The easiest way to get your app on your phone is to run it on your computer and access it from your phone. This requires your phone to be on the same WiFi network as your computer.</p>
+    
+    <ol class="steps">
+      <li>Install a simple web server on your computer:
+        <ul>
+          <li>Download and install <a href="https://nodejs.org/en/download/" target="_blank">Node.js</a> if you don't have it</li>
+          <li>Open a command prompt (cmd) in your GroceryMealPlanApp folder</li>
+          <li>Run this command: <span class="highlight">npx http-server</span></li>
+          <li>You should see a message showing the server address (something like http://192.168.x.x:8080)</li>
+        </ul>
+      </li>
+      <li>On your Android phone:
+        <ul>
+          <li>Make sure it's connected to the same WiFi network as your computer</li>
+          <li>Open your browser and go to the address shown (e.g., http://192.168.x.x:8080)</li>
+          <li>Your app will open in the browser</li>
+          <li>Tap the three dots menu (⋮) and select "Add to Home screen" to install it</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+  
+  <div class="option">
+    <h2>Option 2: Use a ZIP File Transfer</h2>
+    <p>You can compress the app and transfer it to your phone:</p>
+    
+    <ol class="steps">
+      <li>On your computer:
+        <ul>
+          <li>Right-click on your GroceryMealPlanApp folder</li>
+          <li>Select "Send to" > "Compressed (zipped) folder"</li>
+          <li>This creates a GroceryMealPlanApp.zip file</li>
+        </ul>
+      </li>
+      <li>Transfer this ZIP file to your phone by:
+        <ul>
+          <li>Email it to yourself, or</li>
+          <li>Upload it to Google Drive and access it from your phone, or</li>
+          <li>Use a USB cable to copy it directly to your phone</li>
+        </ul>
+      </li>
+      <li>On your Android phone:
+        <ul>
+          <li>Install a file manager app (like Files by Google) if you don't have one</li>
+          <li>Download and extract the ZIP file</li>
+          <li>Navigate to the extracted folder and tap on index.html</li>
+          <li>The app will open in your browser</li>
+          <li>Tap the three dots menu (⋮) and select "Add to Home screen"</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+  
+  <div class="instructions">
+    <h2>Need More Help?</h2>
+    <p>For the simplest but temporary solution:</p>
+    <ol>
+      <li>Make sure your computer is turned on with the GroceryMealPlanApp folder accessible</li>
+      <li>Run the http-server as described in Option 1</li>
+      <li>Keep your computer running when you want to use the app on your phone</li>
+    </ol>
+    <p>This method requires your computer to be running the server whenever you want to use the app on your phone, but it's the quickest way to get started.</p>
+  </div>
+</body>
+</html> 
