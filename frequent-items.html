@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frequent Items - Grocery & Meal Planner</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <link rel="icon" href="app-icon.svg">
+  <link rel="apple-touch-icon" href="app-icon.png">
+  <style>
+    /* Base styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fa;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 100%;
+      padding: 0 15px;
+      margin: 0 auto;
+      max-width: 100%;
+    }
+    
+    h1, h2, h3, h4 {
+      margin-bottom: 0.5rem;
+      line-height: 1.2;
+    }
+    
+    a {
+      text-decoration: none;
+    }
+    
+    /* Header styles */
+    .header {
+      background-color: #4CAF50;
+      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
+      padding: 1.2rem;
+      color: white;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      position: relative;
+      border-radius: 0 0 16px 16px;
+      margin-bottom: 1rem;
+    }
+    
+    .back-button {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+      color: white;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .back-button:hover {
+      transform: translateY(-50%) scale(1.1);
+    }
+    
+    /* Mobile friendly navigation */
+    .mobile-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: white;
+      display: flex;
+      justify-content: space-around;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+      z-index: 100;
+      border-radius: 16px 16px 0 0;
+      padding: 4px 0;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.75rem;
+      width: 25%;
+      position: relative;
+      transition: all 0.2s;
+    }
+    
+    .nav-item.active {
+      color: #4CAF50;
+    }
+    
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      width: 40%;
+      height: 4px;
+      background-color: #4CAF50;
+      border-radius: 4px;
+    }
+    
+    .nav-icon {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+    
+    /* Page specific styles */
+    .page {
+      padding-bottom: 80px; /* Space for fixed navigation */
+    }
+    
+    /* Frequent items list */
+    .frequent-items {
+      margin-top: 1rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .frequent-items-title {
+      font-size: 1.1rem;
+      padding: 0.5rem 0;
+      margin-bottom: 0.8rem;
+      color: #4CAF50;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .frequent-item {
+      display: flex;
+      align-items: center;
+      padding: 0.7rem;
+      background-color: #f9f9f9;
+      border-radius: 12px;
+      margin-bottom: 0.5rem;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .item-actions {
+      display: flex;
+      position: absolute;
+      right: 0.5rem;
+    }
+    
+    .item-action {
+      background: none;
+      border: none;
+      padding: 0.3rem;
+      margin-left: 0.3rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+    
+    .item-action:hover {
+      background-color: rgba(0,0,0,0.05);
+    }
+    
+    .edit-action {
+      color: #4CAF50;
+    }
+    
+    .delete-action {
+      color: #f44336;
+    }
+    
+    /* Add button */
+    .add-button {
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      box-shadow: 0 4px 12px rgba(0,128,0,0.3);
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .add-button:hover, .add-button:active {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,128,0,0.4);
+    }
+    
+    /* Add item form */
+    .add-form {
+      background-color: white;
+      border-radius: 16px;
+      padding: 1.2rem;
+      margin-top: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .add-form.active {
+      display: block;
+    }
+    
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.6rem;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 0.85rem;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+    
+    .form-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+    }
+    
+    /* Button styles */
+    .btn {
+      padding: 0.8rem 1.4rem;
+      border-radius: 12px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background-color: #4CAF50;
+      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,128,0,0.2);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: 0 4px 12px rgba(0,128,0,0.3);
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e0e0e0;
+    }
+    
+    /* Empty state */
+    .empty-list {
+      text-align: center;
+      padding: 2rem;
+      color: #888;
+      display: none;
+    }
+    
+    .empty-list.visible {
+      display: block;
+    }
+    
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+    
+    /* List action buttons */
+    .list-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1rem;
+    }
+    
+    .list-action-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 12px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      background-color: #f1f1f1;
+      color: #333;
+      margin-left: 0.7rem;
+    }
+    
+    .list-action-btn:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .list-action-btn.btn-add-all {
+      background-color: #e8f5e9;
+      color: #2E7D32;
+    }
+    
+    .list-action-btn.btn-add-all:hover {
+      background-color: #c8e6c9;
+    }
+    
+    /* Select mode */
+    .select-mode .frequent-item {
+      padding-left: 2.5rem;
+    }
+    
+    .item-checkbox {
+      position: absolute;
+      left: 0.7rem;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      appearance: none;
+      border: 2px solid #4CAF50;
+      background: white;
+      cursor: pointer;
+      display: none;
+    }
+    
+    .select-mode .item-checkbox {
+      display: block;
+    }
+    
+    .item-checkbox:checked {
+      background-color: #4CAF50;
+    }
+    
+    .item-checkbox:checked::after {
+      content: '✓';
+      position: absolute;
+      color: white;
+      font-size: 14px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    /* Category label */
+    .category-label {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.2rem;
+    }
+    
+    /* Smooth transitions */
+    * {
+      transition: background-color 0.2s, opacity 0.2s;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="groceries.html" class="back-button">←</a>
+    <h1>Frequent Items</h1>
+  </header>
+
+  <div class="container">
+    <div class="page">
+      <div class="list-actions">
+        <button class="list-action-btn" id="selectModeBtn">Select Items</button>
+        <button class="list-action-btn btn-add-all" id="addSelectedBtn" style="display: none;">Add Selected</button>
+      </div>
+      
+      <div class="add-form" id="addForm">
+        <div class="form-group">
+          <label for="itemName">Item Name</label>
+          <input type="text" id="itemName" placeholder="Enter item name">
+        </div>
+        <div class="form-group">
+          <label for="itemCategory">Category</label>
+          <input type="text" id="itemCategory" placeholder="Enter category (e.g., Dairy, Produce)">
+        </div>
+        <div class="form-group">
+          <label for="itemQuantity">Default Quantity</label>
+          <input type="text" id="itemQuantity" placeholder="E.g., 2 lbs, 1 bottle">
+        </div>
+        <div class="form-buttons">
+          <button class="btn btn-secondary" id="cancelAdd">Cancel</button>
+          <button class="btn btn-primary" id="saveItem">Save Item</button>
+        </div>
+      </div>
+      
+      <div class="frequent-items" id="frequentItems">
+        <div class="frequent-items-title">
+          <span>My Frequent Items</span>
+        </div>
+        <div id="frequentItemsList">
+          <!-- Items will be populated here dynamically -->
+        </div>
+      </div>
+      
+      <div class="empty-list" id="emptyList">
+        <div class="empty-icon">📝</div>
+        <p>You don't have any frequent items yet.</p>
+        <p>Add items that you buy regularly to make shopping easier!</p>
+      </div>
+      
+      <button class="add-button" id="addButton">+</button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="mobile-nav">
+    <a href="index.html" class="nav-item">
+      <div class="nav-icon">🏠</div>
+      <span>Home</span>
+    </a>
+    <a href="groceries.html" class="nav-item active">
+      <div class="nav-icon">🛒</div>
+      <span>Grocery</span>
+    </a>
+    <a href="meal-plan.html" class="nav-item">
+      <div class="nav-icon">🍽️</div>
+      <span>Meals</span>
+    </a>
+    <a href="recipes.html" class="nav-item">
+      <div class="nav-icon">📖</div>
+      <span>Recipes</span>
+    </a>
+  </nav>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements
+      const addButton = document.getElementById('addButton');
+      const addForm = document.getElementById('addForm');
+      const cancelAdd = document.getElementById('cancelAdd');
+      const saveItem = document.getElementById('saveItem');
+      const frequentItemsList = document.getElementById('frequentItemsList');
+      const emptyList = document.getElementById('emptyList');
+      const selectModeBtn = document.getElementById('selectModeBtn');
+      const addSelectedBtn = document.getElementById('addSelectedBtn');
+      
+      // State
+      let isEditMode = false;
+      let isSelectMode = false;
+      let editItemId = null;
+      let frequentItems = JSON.parse(localStorage.getItem('frequentItems') || '[]');
+      
+      // Initialize
+      renderFrequentItems();
+      
+      // Show/hide add form
+      addButton.addEventListener('click', function() {
+        isEditMode = false;
+        editItemId = null;
+        resetForm();
+        addForm.classList.add('active');
+        document.getElementById('itemName').focus();
+      });
+      
+      cancelAdd.addEventListener('click', function() {
+        addForm.classList.remove('active');
+        resetForm();
+      });
+      
+      // Toggle select mode
+      selectModeBtn.addEventListener('click', function() {
+        isSelectMode = !isSelectMode;
+        document.getElementById('frequentItems').classList.toggle('select-mode', isSelectMode);
+        this.textContent = isSelectMode ? 'Cancel Selection' : 'Select Items';
+        addSelectedBtn.style.display = isSelectMode ? 'flex' : 'none';
+      });
+      
+      // Add selected items to grocery list
+      addSelectedBtn.addEventListener('click', function() {
+        const selectedItems = [];
+        const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+        
+        checkboxes.forEach(checkbox => {
+          const item = frequentItems.find(item => item.id == checkbox.getAttribute('data-id'));
+          if (item) {
+            selectedItems.push({
+              name: item.name,
+              quantity: item.quantity
+            });
+          }
+        });
+        
+        if (selectedItems.length > 0) {
+          // Store selected items temporarily
+          localStorage.setItem('selectedFrequentItems', JSON.stringify(selectedItems));
+          
+          // Redirect to grocery list
+          window.location.href = 'groceries.html?add-frequent=true';
+        }
+      });
+      
+      // Save new or edited item
+      saveItem.addEventListener('click', function() {
+        const name = document.getElementById('itemName').value;
+        const category = document.getElementById('itemCategory').value;
+        const quantity = document.getElementById('itemQuantity').value;
+        
+        if (name) {
+          if (isEditMode && editItemId !== null) {
+            // Update existing item
+            const index = frequentItems.findIndex(item => item.id == editItemId);
+            if (index !== -1) {
+              frequentItems[index] = {
+                id: editItemId,
+                name,
+                category,
+                quantity
+              };
+            }
+          } else {
+            // Add new item
+            const newItem = {
+              id: Date.now(),
+              name,
+              category,
+              quantity
+            };
+            
+            frequentItems.push(newItem);
+          }
+          
+          // Save to localStorage
+          localStorage.setItem('frequentItems', JSON.stringify(frequentItems));
+          
+          // Update UI
+          renderFrequentItems();
+          
+          // Reset and hide form
+          resetForm();
+          addForm.classList.remove('active');
+        }
+      });
+      
+      // Handle item actions
+      frequentItemsList.addEventListener('click', function(e) {
+        const target = e.target;
+        
+        // Edit button clicked
+        if (target.classList.contains('edit-action') || target.closest('.edit-action')) {
+          const itemId = target.closest('.frequent-item').getAttribute('data-id');
+          editFrequentItem(itemId);
+        }
+        
+        // Delete button clicked
+        if (target.classList.contains('delete-action') || target.closest('.delete-action')) {
+          const itemId = target.closest('.frequent-item').getAttribute('data-id');
+          deleteFrequentItem(itemId);
+        }
+      });
+      
+      function editFrequentItem(itemId) {
+        const item = frequentItems.find(item => item.id == itemId);
+        if (item) {
+          isEditMode = true;
+          editItemId = itemId;
+          
+          document.getElementById('itemName').value = item.name;
+          document.getElementById('itemCategory').value = item.category || '';
+          document.getElementById('itemQuantity').value = item.quantity || '';
+          
+          addForm.classList.add('active');
+          document.getElementById('itemName').focus();
+        }
+      }
+      
+      function deleteFrequentItem(itemId) {
+        frequentItems = frequentItems.filter(item => item.id != itemId);
+        localStorage.setItem('frequentItems', JSON.stringify(frequentItems));
+        renderFrequentItems();
+      }
+      
+      function renderFrequentItems() {
+        frequentItemsList.innerHTML = '';
+        
+        if (frequentItems.length === 0) {
+          emptyList.classList.add('visible');
+          return;
+        }
+        
+        emptyList.classList.remove('visible');
+        
+        frequentItems.forEach(item => {
+          const itemElement = document.createElement('div');
+          itemElement.className = 'frequent-item';
+          itemElement.setAttribute('data-id', item.id);
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'item-checkbox';
+          checkbox.setAttribute('data-id', item.id);
+          
+          const content = document.createElement('div');
+          content.style.flex = '1';
+          
+          const name = document.createElement('div');
+          name.textContent = item.name + (item.quantity ? ` - ${item.quantity}` : '');
+          
+          content.appendChild(name);
+          
+          if (item.category) {
+            const category = document.createElement('div');
+            category.className = 'category-label';
+            category.textContent = item.category;
+            content.appendChild(category);
+          }
+          
+          const actions = document.createElement('div');
+          actions.className = 'item-actions';
+          
+          const editBtn = document.createElement('button');
+          editBtn.className = 'item-action edit-action';
+          editBtn.innerHTML = '✏️';
+          
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'item-action delete-action';
+          deleteBtn.innerHTML = '🗑️';
+          
+          actions.appendChild(editBtn);
+          actions.appendChild(deleteBtn);
+          
+          itemElement.appendChild(checkbox);
+          itemElement.appendChild(content);
+          itemElement.appendChild(actions);
+          
+          frequentItemsList.appendChild(itemElement);
+        });
+      }
+      
+      function resetForm() {
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemCategory').value = '';
+        document.getElementById('itemQuantity').value = '';
+      }
+    });
+  </script>
+</body>
+</html> 

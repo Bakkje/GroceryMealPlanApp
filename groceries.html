@@ -546,6 +546,25 @@
         localStorage.removeItem('selectedIngredients');
       }
       
+      // Check if adding from frequent items page
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('add-frequent') === 'true') {
+        const selectedFrequentItems = JSON.parse(localStorage.getItem('selectedFrequentItems') || '[]');
+        
+        if (selectedFrequentItems.length > 0) {
+          // Add selected frequent items to grocery list
+          selectedFrequentItems.forEach(item => {
+            addGroceryItem(item.name, item.quantity);
+          });
+          
+          // Clear selected items
+          localStorage.removeItem('selectedFrequentItems');
+        }
+        
+        // Remove the parameter to prevent duplicate additions on refresh
+        window.history.replaceState({}, document.title, 'groceries.html');
+      }
+      
       // Show/hide add form
       addButton.addEventListener('click', function() {
         addForm.classList.add('active');
@@ -575,21 +594,19 @@
         }
       });
       
-      // Remove checked items
+      // Remove checked items - without confirmation
       removeChecked.addEventListener('click', function() {
         const checkedItems = groceryList.querySelectorAll('.grocery-item.checked');
-        if (checkedItems.length > 0 && confirm('Remove all checked items?')) {
+        if (checkedItems.length > 0) {
           checkedItems.forEach(item => item.remove());
           saveGroceryListState();
         }
       });
       
-      // Clear entire list
+      // Clear entire list - without confirmation
       clearList.addEventListener('click', function() {
-        if (confirm('Are you sure you want to clear the entire grocery list?')) {
-          groceryList.innerHTML = '';
-          saveGroceryListState();
-        }
+        groceryList.innerHTML = '';
+        saveGroceryListState();
       });
       
       // Add frequently used items
@@ -601,9 +618,9 @@
         });
       });
       
-      // Edit frequent items
+      // Edit frequent items - link to separate page
       editFrequent.addEventListener('click', function() {
-        alert('Feature coming soon: You will be able to customize your frequently used items.');
+        window.location.href = 'frequent-items.html';
       });
       
       // Save new item
