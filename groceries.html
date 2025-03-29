@@ -126,32 +126,19 @@
     /* Grocery list styles */
     .grocery-list {
       margin-top: 1rem;
-    }
-    
-    .category {
-      margin-bottom: 1.8rem;
       background: white;
       padding: 1rem;
       border-radius: 16px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
-    .category-title {
-      font-size: 1.1rem;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #eee;
-      margin-bottom: 0.8rem;
-      color: #4CAF50;
-      font-weight: 600;
-    }
-    
     .grocery-item {
       display: flex;
       align-items: center;
-      padding: 0.9rem;
+      padding: 0.7rem;
       background-color: #f9f9f9;
       border-radius: 12px;
-      margin-bottom: 0.7rem;
+      margin-bottom: 0.5rem;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       transition: transform 0.2s, box-shadow 0.2s;
     }
@@ -201,7 +188,7 @@
     /* Add item button */
     .add-button {
       position: fixed;
-      bottom: 85px;
+      bottom: 100px;
       right: 20px;
       width: 60px;
       height: 60px;
@@ -340,6 +327,96 @@
     * {
       transition: background-color 0.2s, opacity 0.2s;
     }
+    
+    /* List action buttons */
+    .list-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    
+    .list-action-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 12px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      background-color: #f1f1f1;
+      color: #333;
+    }
+    
+    .list-action-btn:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .list-action-btn.btn-danger {
+      background-color: #ffebee;
+      color: #d32f2f;
+    }
+    
+    .list-action-btn.btn-danger:hover {
+      background-color: #ffcdd2;
+    }
+    
+    .list-action-btn svg {
+      margin-right: 0.5rem;
+      width: 16px;
+      height: 16px;
+    }
+    
+    /* Frequently used items section */
+    .frequent-items {
+      margin-top: 1.2rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .frequent-items-title {
+      font-size: 1.1rem;
+      padding: 0.5rem 0;
+      margin-bottom: 0.8rem;
+      color: #4CAF50;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .frequent-items-title button {
+      background: none;
+      border: none;
+      color: #4CAF50;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .frequent-items-title button:hover {
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+    
+    .frequent-item {
+      display: flex;
+      align-items: center;
+      padding: 0.7rem;
+      background-color: #f9f9f9;
+      border-radius: 12px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .frequent-item:hover {
+      background-color: #e8f5e9;
+    }
   </style>
 </head>
 <body>
@@ -376,42 +453,38 @@
         </div>
       </div>
       
+      <div class="list-actions">
+        <button class="list-action-btn" id="removeChecked">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          Remove Checked
+        </button>
+        <button class="list-action-btn btn-danger" id="clearList">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Clear All
+        </button>
+      </div>
+      
       <div class="grocery-list" id="groceryList">
-        <div class="category">
-          <h3 class="category-title">Produce</h3>
-          <div class="grocery-item">
-            <input type="checkbox" class="grocery-checkbox">
-            <div>Carrots - 1 bag</div>
-          </div>
-          <div class="grocery-item">
-            <input type="checkbox" class="grocery-checkbox">
-            <div>Broccoli - 1 head</div>
-          </div>
-          <div class="grocery-item">
-            <input type="checkbox" class="grocery-checkbox">
-            <div>Spinach - 1 bag</div>
-          </div>
+        <!-- Grocery items will be added here -->
+      </div>
+      
+      <div class="frequent-items" id="frequentItems">
+        <div class="frequent-items-title">
+          <span>Frequently Used Items</span>
+          <button id="editFrequent">Edit</button>
         </div>
-        
-        <div class="category">
-          <h3 class="category-title">Dairy</h3>
-          <div class="grocery-item">
-            <input type="checkbox" class="grocery-checkbox">
-            <div>Milk - 1/2 gallon</div>
-          </div>
-          <div class="grocery-item">
-            <input type="checkbox" class="grocery-checkbox">
-            <div>Cheese - 8 oz</div>
-          </div>
-        </div>
-        
-        <div class="category">
-          <h3 class="category-title">Pantry</h3>
-          <div class="grocery-item">
-            <input type="checkbox" class="grocery-checkbox">
-            <div>Rice - 1 bag</div>
-          </div>
-        </div>
+        <div class="frequent-item" data-name="Milk" data-quantity="1 gallon">Milk</div>
+        <div class="frequent-item" data-name="Eggs" data-quantity="1 dozen">Eggs</div>
+        <div class="frequent-item" data-name="Bread" data-quantity="1 loaf">Bread</div>
+        <div class="frequent-item" data-name="Bananas" data-quantity="bunch">Bananas</div>
+        <div class="frequent-item" data-name="Coffee" data-quantity="1 bag">Coffee</div>
       </div>
       
       <button class="add-button" id="addButton">+</button>
@@ -445,6 +518,10 @@
       const cancelAdd = document.getElementById('cancelAdd');
       const saveItem = document.getElementById('saveItem');
       const groceryList = document.getElementById('groceryList');
+      const removeChecked = document.getElementById('removeChecked');
+      const clearList = document.getElementById('clearList');
+      const frequentItems = document.querySelectorAll('.frequent-item');
+      const editFrequent = document.getElementById('editFrequent');
       
       // Check if there are ingredients added from recipes
       const selectedIngredients = JSON.parse(localStorage.getItem('selectedIngredients') || '[]');
@@ -461,24 +538,8 @@
             quantity = parts[1];
           }
           
-          // Determine category based on ingredient name (basic categorization)
-          let category = 'Other';
-          const lowerName = name.toLowerCase();
-          
-          if (/carrot|broccoli|spinach|lettuce|pepper|onion|tomato|potato|cucumber|celery/.test(lowerName)) {
-            category = 'Produce';
-          } else if (/milk|cheese|yogurt|cream|butter/.test(lowerName)) {
-            category = 'Dairy';
-          } else if (/chicken|beef|pork|steak|fish|salmon|shrimp|meat/.test(lowerName)) {
-            category = 'Meat';
-          } else if (/rice|pasta|flour|sugar|oil|cereal|bean|canned|sauce|spice|herb/.test(lowerName)) {
-            category = 'Pantry';
-          } else if (/frozen|ice cream/.test(lowerName)) {
-            category = 'Frozen';
-          }
-          
           // Add to grocery list
-          addGroceryItem(name, category, quantity);
+          addGroceryItem(name, quantity);
         });
         
         // Clear the selected ingredients
@@ -514,18 +575,45 @@
         }
       });
       
+      // Remove checked items
+      removeChecked.addEventListener('click', function() {
+        const checkedItems = groceryList.querySelectorAll('.grocery-item.checked');
+        if (checkedItems.length > 0 && confirm('Remove all checked items?')) {
+          checkedItems.forEach(item => item.remove());
+          saveGroceryListState();
+        }
+      });
+      
+      // Clear entire list
+      clearList.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear the entire grocery list?')) {
+          groceryList.innerHTML = '';
+          saveGroceryListState();
+        }
+      });
+      
+      // Add frequently used items
+      frequentItems.forEach(item => {
+        item.addEventListener('click', function() {
+          const name = this.getAttribute('data-name');
+          const quantity = this.getAttribute('data-quantity');
+          addGroceryItem(name, quantity);
+        });
+      });
+      
+      // Edit frequent items
+      editFrequent.addEventListener('click', function() {
+        alert('Feature coming soon: You will be able to customize your frequently used items.');
+      });
+      
       // Save new item
       saveItem.addEventListener('click', function() {
         const name = document.getElementById('itemName').value;
-        const category = document.getElementById('itemCategory').value;
         const quantity = document.getElementById('itemQuantity').value;
         
         if (name) {
           // Create new item
-          addGroceryItem(name, category, quantity);
-          
-          // Save grocery list
-          saveGroceryListState();
+          addGroceryItem(name, quantity);
           
           // Reset and hide form
           resetForm();
@@ -533,10 +621,7 @@
         }
       });
       
-      function addGroceryItem(name, category, quantity) {
-        // Find or create category section
-        let categorySection = findOrCreateCategory(category);
-        
+      function addGroceryItem(name, quantity) {
         // Create item
         const item = document.createElement('div');
         item.className = 'grocery-item';
@@ -551,35 +636,11 @@
         item.appendChild(checkbox);
         item.appendChild(text);
         
-        // Add to category
-        categorySection.appendChild(item);
+        // Add to grocery list
+        groceryList.appendChild(item);
         
         // Save grocery list
         saveGroceryListState();
-      }
-      
-      function findOrCreateCategory(categoryName) {
-        // Look for existing category
-        let categories = groceryList.querySelectorAll('.category');
-        for (let i = 0; i < categories.length; i++) {
-          let title = categories[i].querySelector('.category-title');
-          if (title.textContent === categoryName) {
-            return categories[i];
-          }
-        }
-        
-        // Create new category
-        const newCategory = document.createElement('div');
-        newCategory.className = 'category';
-        
-        const title = document.createElement('h3');
-        title.className = 'category-title';
-        title.textContent = categoryName;
-        
-        newCategory.appendChild(title);
-        groceryList.appendChild(newCategory);
-        
-        return newCategory;
       }
       
       function resetForm() {
@@ -591,19 +652,12 @@
       function saveGroceryListState() {
         const groceryData = [];
         
-        // Get all categories
-        const categories = groceryList.querySelectorAll('.category');
-        categories.forEach(category => {
-          const categoryName = category.querySelector('.category-title').textContent;
-          
-          // Get all items in this category
-          const items = category.querySelectorAll('.grocery-item');
-          items.forEach(item => {
-            groceryData.push({
-              category: categoryName,
-              text: item.querySelector('div').textContent,
-              checked: item.querySelector('.grocery-checkbox').checked
-            });
+        // Get all items
+        const items = groceryList.querySelectorAll('.grocery-item');
+        items.forEach(item => {
+          groceryData.push({
+            text: item.querySelector('div').textContent,
+            checked: item.querySelector('.grocery-checkbox').checked
           });
         });
         
@@ -634,48 +688,25 @@
           // Clear current list
           groceryList.innerHTML = '';
           
-          // Group by category
-          const categories = {};
+          // Add items
           groceryData.forEach(item => {
-            if (!categories[item.category]) {
-              categories[item.category] = [];
+            const itemElement = document.createElement('div');
+            itemElement.className = 'grocery-item';
+            if (item.checked) {
+              itemElement.classList.add('checked');
             }
-            categories[item.category].push(item);
-          });
-          
-          // Create each category and its items
-          Object.keys(categories).forEach(categoryName => {
-            const categorySection = document.createElement('div');
-            categorySection.className = 'category';
             
-            const title = document.createElement('h3');
-            title.className = 'category-title';
-            title.textContent = categoryName;
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'grocery-checkbox';
+            checkbox.checked = item.checked;
             
-            categorySection.appendChild(title);
+            const text = document.createElement('div');
+            text.textContent = item.text;
             
-            // Add items to this category
-            categories[categoryName].forEach(item => {
-              const itemElement = document.createElement('div');
-              itemElement.className = 'grocery-item';
-              if (item.checked) {
-                itemElement.classList.add('checked');
-              }
-              
-              const checkbox = document.createElement('input');
-              checkbox.type = 'checkbox';
-              checkbox.className = 'grocery-checkbox';
-              checkbox.checked = item.checked;
-              
-              const text = document.createElement('div');
-              text.textContent = item.text;
-              
-              itemElement.appendChild(checkbox);
-              itemElement.appendChild(text);
-              categorySection.appendChild(itemElement);
-            });
-            
-            groceryList.appendChild(categorySection);
+            itemElement.appendChild(checkbox);
+            itemElement.appendChild(text);
+            groceryList.appendChild(itemElement);
           });
         }
       }

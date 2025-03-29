@@ -160,35 +160,22 @@
     .quick-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin: 1.5rem 0;
+      gap: 12px;
+      margin: 1.2rem 0;
     }
     
     .action-card {
       background-color: white;
       border-radius: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      padding: 1.5rem;
-      text-align: center;
+      padding: 0;
       color: #333;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      overflow: hidden;
       transition: transform 0.3s, box-shadow 0.3s;
       position: relative;
-      overflow: hidden;
-    }
-    
-    .action-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, rgba(0,128,0,0.05) 0%, rgba(255,255,255,0) 60%);
-      z-index: 0;
+      height: 140px;
     }
     
     .action-card:active {
@@ -196,17 +183,52 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
     
-    .action-icon {
-      font-size: 2.2rem;
-      margin-bottom: 0.7rem;
-      position: relative;
+    .action-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       z-index: 1;
     }
     
-    .action-card div:last-child {
+    .action-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.7));
+      z-index: 2;
+    }
+    
+    .action-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 1rem;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+    }
+    
+    .action-icon {
+      font-size: 1.8rem;
+      margin-right: 0.6rem;
+      background-color: rgba(255,255,255,0.9);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    
+    .action-title {
+      color: white;
       font-weight: 500;
-      position: relative;
-      z-index: 1;
+      font-size: 1.1rem;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     
     /* Button styles */
@@ -447,6 +469,7 @@
       display: flex;
       align-items: center;
       transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
     }
     
     .recent-item:active {
@@ -519,41 +542,57 @@
     <div id="homePage" class="page active-page">
       <div class="quick-actions">
         <a href="groceries.html" class="action-card">
-          <div class="action-icon">🛒</div>
-          <div>Grocery List</div>
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=60" alt="Grocery list" class="action-image">
+          <div class="action-overlay"></div>
+          <div class="action-content">
+            <div class="action-icon">🛒</div>
+            <div class="action-title">Grocery List</div>
+          </div>
         </a>
         <a href="meal-plan.html" class="action-card">
-          <div class="action-icon">🍽️</div>
-          <div>Meal Plan</div>
+          <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=60" alt="Meal plan" class="action-image">
+          <div class="action-overlay"></div>
+          <div class="action-content">
+            <div class="action-icon">🍽️</div>
+            <div class="action-title">Meal Plan</div>
+          </div>
         </a>
         <a href="recipes.html" class="action-card">
-          <div class="action-icon">📖</div>
-          <div>Recipes</div>
+          <img src="https://images.unsplash.com/photo-1556911220-bda9f7b53e01?auto=format&fit=crop&w=800&q=60" alt="Recipes" class="action-image">
+          <div class="action-overlay"></div>
+          <div class="action-content">
+            <div class="action-icon">📖</div>
+            <div class="action-title">Recipes</div>
+          </div>
         </a>
         <a href="#" class="action-card" id="addNewBtn">
-          <div class="action-icon">➕</div>
-          <div>Add New</div>
+          <img src="https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=800&q=60" alt="Add new" class="action-image">
+          <div class="action-overlay"></div>
+          <div class="action-content">
+            <div class="action-icon">➕</div>
+            <div class="action-title">Add New</div>
+          </div>
         </a>
       </div>
       
       <div class="recent-section">
         <h3>Recent Meals</h3>
-        <div class="recent-item">
+        <a href="meal-plan.html?meal=Pasta+Bolognese" class="recent-item">
           <div class="recent-icon">🍲</div>
           <div>Pasta Bolognese</div>
-        </div>
-        <div class="recent-item">
+        </a>
+        <a href="meal-plan.html?meal=Chicken+Curry" class="recent-item">
           <div class="recent-icon">🍲</div>
           <div>Chicken Curry</div>
-        </div>
+        </a>
       </div>
       
       <div class="recent-section">
         <h3>Grocery List</h3>
-        <div class="recent-item">
+        <a href="groceries.html" class="recent-item">
           <div class="recent-icon">🛒</div>
           <div id="groceryCounter">0 items on your list</div>
-        </div>
+        </a>
       </div>
     </div>
   </div>
