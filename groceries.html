@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grocery List - Meal Planner</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <link rel="icon" href="app-icon.svg">
+  <link rel="apple-touch-icon" href="app-icon.png">
+  <style>
+    /* Base styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fa;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 100%;
+      padding: 0 15px;
+      margin: 0 auto;
+      max-width: 100%;
+    }
+    
+    h1, h2, h3, h4 {
+      margin-bottom: 0.5rem;
+      line-height: 1.2;
+    }
+    
+    a {
+      text-decoration: none;
+    }
+    
+    /* Header styles */
+    .header {
+      background-color: #4CAF50;
+      padding: 1rem;
+      color: white;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    .back-button {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+      color: white;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    
+    /* Mobile friendly navigation */
+    .mobile-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: white;
+      display: flex;
+      justify-content: space-around;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 100;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.75rem;
+      width: 25%;
+    }
+    
+    .nav-item.active {
+      color: #4CAF50;
+    }
+    
+    .nav-icon {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+    
+    /* Page specific styles */
+    .page {
+      padding-bottom: 70px; /* Space for fixed navigation */
+    }
+    
+    /* Grocery list styles */
+    .grocery-list {
+      margin-top: 1rem;
+    }
+    
+    .category {
+      margin-bottom: 1.5rem;
+    }
+    
+    .category-title {
+      font-size: 1.1rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 0.5rem;
+    }
+    
+    .grocery-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem;
+      background-color: white;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .grocery-checkbox {
+      margin-right: 0.75rem;
+      width: 20px;
+      height: 20px;
+    }
+    
+    .grocery-item.checked {
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+    
+    /* Add item button */
+    .add-button {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+    }
+    
+    /* Add item form */
+    .add-form {
+      background-color: white;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: none;
+    }
+    
+    .add-form.active {
+      display: block;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-group input, 
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    
+    .form-buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    /* Button styles */
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    .btn-secondary {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="index.html" class="back-button">←</a>
+    <h1>Grocery List</h1>
+  </header>
+
+  <div class="container">
+    <div class="page">
+      <div class="add-form" id="addForm">
+        <div class="form-group">
+          <label for="itemName">Item Name</label>
+          <input type="text" id="itemName" placeholder="Enter item name">
+        </div>
+        <div class="form-group">
+          <label for="itemCategory">Category</label>
+          <select id="itemCategory">
+            <option value="Produce">Produce</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Meat">Meat</option>
+            <option value="Pantry">Pantry</option>
+            <option value="Frozen">Frozen</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="itemQuantity">Quantity</label>
+          <input type="text" id="itemQuantity" placeholder="E.g., 2 lbs, 1 bottle">
+        </div>
+        <div class="form-buttons">
+          <button class="btn btn-secondary" id="cancelAdd">Cancel</button>
+          <button class="btn btn-primary" id="saveItem">Add Item</button>
+        </div>
+      </div>
+      
+      <div class="grocery-list" id="groceryList">
+        <div class="category">
+          <h3 class="category-title">Produce</h3>
+          <div class="grocery-item">
+            <input type="checkbox" class="grocery-checkbox">
+            <div>Carrots - 1 bag</div>
+          </div>
+          <div class="grocery-item">
+            <input type="checkbox" class="grocery-checkbox">
+            <div>Broccoli - 1 head</div>
+          </div>
+          <div class="grocery-item">
+            <input type="checkbox" class="grocery-checkbox">
+            <div>Spinach - 1 bag</div>
+          </div>
+        </div>
+        
+        <div class="category">
+          <h3 class="category-title">Dairy</h3>
+          <div class="grocery-item">
+            <input type="checkbox" class="grocery-checkbox">
+            <div>Milk - 1/2 gallon</div>
+          </div>
+          <div class="grocery-item">
+            <input type="checkbox" class="grocery-checkbox">
+            <div>Cheese - 8 oz</div>
+          </div>
+        </div>
+        
+        <div class="category">
+          <h3 class="category-title">Pantry</h3>
+          <div class="grocery-item">
+            <input type="checkbox" class="grocery-checkbox">
+            <div>Rice - 1 bag</div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="add-button" id="addButton">+</button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="mobile-nav">
+    <a href="index.html" class="nav-item">
+      <div class="nav-icon">🏠</div>
+      <span>Home</span>
+    </a>
+    <a href="groceries.html" class="nav-item active">
+      <div class="nav-icon">🛒</div>
+      <span>Grocery</span>
+    </a>
+    <a href="meal-plan.html" class="nav-item">
+      <div class="nav-icon">🍽️</div>
+      <span>Meals</span>
+    </a>
+    <a href="recipes.html" class="nav-item">
+      <div class="nav-icon">📖</div>
+      <span>Recipes</span>
+    </a>
+  </nav>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const addButton = document.getElementById('addButton');
+      const addForm = document.getElementById('addForm');
+      const cancelAdd = document.getElementById('cancelAdd');
+      const saveItem = document.getElementById('saveItem');
+      const groceryList = document.getElementById('groceryList');
+      
+      // Show/hide add form
+      addButton.addEventListener('click', function() {
+        addForm.classList.add('active');
+        document.getElementById('itemName').focus();
+      });
+      
+      cancelAdd.addEventListener('click', function() {
+        addForm.classList.remove('active');
+        resetForm();
+      });
+      
+      // Handle checkbox toggling
+      groceryList.addEventListener('change', function(e) {
+        if (e.target.matches('.grocery-checkbox')) {
+          const item = e.target.closest('.grocery-item');
+          if (e.target.checked) {
+            item.classList.add('checked');
+          } else {
+            item.classList.remove('checked');
+          }
+        }
+      });
+      
+      // Save new item
+      saveItem.addEventListener('click', function() {
+        const name = document.getElementById('itemName').value;
+        const category = document.getElementById('itemCategory').value;
+        const quantity = document.getElementById('itemQuantity').value;
+        
+        if (name) {
+          // Create new item
+          addGroceryItem(name, category, quantity);
+          
+          // Reset and hide form
+          resetForm();
+          addForm.classList.remove('active');
+        }
+      });
+      
+      function addGroceryItem(name, category, quantity) {
+        // Find or create category section
+        let categorySection = findOrCreateCategory(category);
+        
+        // Create item
+        const item = document.createElement('div');
+        item.className = 'grocery-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'grocery-checkbox';
+        
+        const text = document.createElement('div');
+        text.textContent = quantity ? `${name} - ${quantity}` : name;
+        
+        item.appendChild(checkbox);
+        item.appendChild(text);
+        
+        // Add to category
+        categorySection.appendChild(item);
+      }
+      
+      function findOrCreateCategory(categoryName) {
+        // Look for existing category
+        let categories = groceryList.querySelectorAll('.category');
+        for (let i = 0; i < categories.length; i++) {
+          let title = categories[i].querySelector('.category-title');
+          if (title.textContent === categoryName) {
+            return categories[i];
+          }
+        }
+        
+        // Create new category
+        const newCategory = document.createElement('div');
+        newCategory.className = 'category';
+        
+        const title = document.createElement('h3');
+        title.className = 'category-title';
+        title.textContent = categoryName;
+        
+        newCategory.appendChild(title);
+        groceryList.appendChild(newCategory);
+        
+        return newCategory;
+      }
+      
+      function resetForm() {
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemQuantity').value = '';
+        document.getElementById('itemCategory').selectedIndex = 0;
+      }
+    });
+  </script>
+</body>
+</html> 

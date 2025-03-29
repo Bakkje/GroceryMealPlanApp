@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipes - Meal Planner</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <link rel="icon" href="app-icon.svg">
+  <link rel="apple-touch-icon" href="app-icon.png">
+  <style>
+    /* Base styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fa;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 100%;
+      padding: 0 15px;
+      margin: 0 auto;
+      max-width: 100%;
+    }
+    
+    h1, h2, h3, h4 {
+      margin-bottom: 0.5rem;
+      line-height: 1.2;
+    }
+    
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    /* Header styles */
+    .header {
+      background-color: #4CAF50;
+      padding: 1rem;
+      color: white;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    .back-button {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+      color: white;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    
+    /* Mobile friendly navigation */
+    .mobile-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: white;
+      display: flex;
+      justify-content: space-around;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 100;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.75rem;
+      width: 25%;
+    }
+    
+    .nav-item.active {
+      color: #4CAF50;
+    }
+    
+    .nav-icon {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+    
+    /* Page specific styles */
+    .page {
+      padding-bottom: 70px; /* Space for fixed navigation */
+    }
+    
+    /* Search bar */
+    .search-container {
+      margin: 1rem 0;
+      position: relative;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 2.5rem 0.75rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 25px;
+      font-size: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .search-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #666;
+      font-size: 1.25rem;
+    }
+    
+    /* Recipe grid */
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .recipe-card {
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .recipe-image {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+    }
+    
+    .recipe-content {
+      padding: 0.75rem;
+    }
+    
+    .recipe-title {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      font-size: 1rem;
+    }
+    
+    .recipe-meta {
+      display: flex;
+      align-items: center;
+      font-size: 0.75rem;
+      color: #666;
+    }
+    
+    .recipe-meta div {
+      margin-right: 0.75rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .meta-icon {
+      margin-right: 0.25rem;
+    }
+    
+    /* Recipe detail */
+    .recipe-detail {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #f8f9fa;
+      z-index: 200;
+      overflow-y: auto;
+    }
+    
+    .recipe-detail.active {
+      display: block;
+    }
+    
+    .recipe-detail-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    
+    .recipe-detail-header {
+      background-color: white;
+      padding: 1rem;
+      border-radius: 15px 15px 0 0;
+      margin-top: -15px;
+      position: relative;
+      box-shadow: 0 -5px 10px rgba(0,0,0,0.05);
+    }
+    
+    .recipe-detail-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .recipe-detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    
+    .recipe-detail-meta div {
+      margin-right: 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      color: #666;
+      font-size: 0.875rem;
+    }
+    
+    .recipe-detail-content {
+      background-color: white;
+      padding: 1rem;
+    }
+    
+    .recipe-detail-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .recipe-detail-section h3 {
+      margin-bottom: 0.75rem;
+      color: #4CAF50;
+    }
+    
+    .ingredient-list {
+      list-style: none;
+    }
+    
+    .ingredient-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .ingredient-checkbox {
+      margin-right: 0.75rem;
+    }
+    
+    .instruction-step {
+      margin-bottom: 1rem;
+      display: flex;
+    }
+    
+    .step-number {
+      font-weight: 600;
+      color: #4CAF50;
+      margin-right: 0.75rem;
+      min-width: 24px;
+    }
+    
+    .recipe-actions {
+      display: flex;
+      padding: 1rem;
+      border-top: 1px solid #eee;
+      background-color: white;
+    }
+    
+    /* Categories */
+    .categories {
+      display: flex;
+      overflow-x: auto;
+      padding: 0.5rem 0;
+      margin-bottom: 1rem;
+      scrollbar-width: none; /* Firefox */
+    }
+    
+    .categories::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Edge */
+    }
+    
+    .category {
+      padding: 0.5rem 1rem;
+      background-color: white;
+      border-radius: 20px;
+      margin-right: 0.75rem;
+      white-space: nowrap;
+      font-size: 0.875rem;
+      border: 1px solid #eee;
+    }
+    
+    .category.active {
+      background-color: #4CAF50;
+      color: white;
+      border-color: #4CAF50;
+    }
+    
+    /* Add button */
+    .add-button {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+    }
+    
+    /* Button styles */
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-right: 0.5rem;
+    }
+    
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    .btn-secondary {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid #4CAF50;
+      color: #4CAF50;
+    }
+    
+    .btn-block {
+      display: block;
+      width: 100%;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="recipesList" class="page">
+    <header class="header">
+      <a href="index.html" class="back-button">←</a>
+      <h1>Recipes</h1>
+    </header>
+
+    <div class="container">
+      <div class="search-container">
+        <input type="text" class="search-input" placeholder="Search recipes..." id="searchInput">
+        <div class="search-icon">🔍</div>
+      </div>
+      
+      <div class="categories">
+        <div class="category active">All</div>
+        <div class="category">Quick & Easy</div>
+        <div class="category">Vegetarian</div>
+        <div class="category">Chicken</div>
+        <div class="category">Beef</div>
+        <div class="category">Pasta</div>
+        <div class="category">Desserts</div>
+      </div>
+      
+      <div class="recipe-grid" id="recipeGrid">
+        <!-- Recipe cards will be dynamically generated -->
+      </div>
+      
+      <button class="add-button" id="addRecipeBtn">+</button>
+    </div>
+  </div>
+  
+  <div id="recipeDetail" class="recipe-detail">
+    <header class="header">
+      <button class="back-button" id="backToRecipes">←</button>
+      <h1>Recipe</h1>
+    </header>
+    
+    <div class="recipe-detail-container">
+      <img src="" alt="" class="recipe-detail-image" id="detailImage">
+      
+      <div class="recipe-detail-header">
+        <h2 class="recipe-detail-title" id="detailTitle"></h2>
+        
+        <div class="recipe-detail-meta">
+          <div id="detailTime"><span class="meta-icon">⏱️</span> <span></span></div>
+          <div id="detailServings"><span class="meta-icon">👥</span> <span></span></div>
+          <div id="detailDifficulty"><span class="meta-icon">📊</span> <span></span></div>
+        </div>
+      </div>
+      
+      <div class="recipe-detail-content">
+        <div class="recipe-detail-section">
+          <h3>Ingredients</h3>
+          <ul class="ingredient-list" id="ingredientsList">
+            <!-- Ingredients will be dynamically generated -->
+          </ul>
+        </div>
+        
+        <div class="recipe-detail-section">
+          <h3>Instructions</h3>
+          <div id="instructionsList">
+            <!-- Instructions will be dynamically generated -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="recipe-actions">
+        <button class="btn btn-outline" id="addToGroceryBtn">Add to Grocery List</button>
+        <button class="btn btn-primary" id="addToMealPlanBtn">Add to Meal Plan</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bottom Navigation -->
+  <nav class="mobile-nav">
+    <a href="index.html" class="nav-item">
+      <div class="nav-icon">🏠</div>
+      <span>Home</span>
+    </a>
+    <a href="groceries.html" class="nav-item">
+      <div class="nav-icon">🛒</div>
+      <span>Grocery</span>
+    </a>
+    <a href="meal-plan.html" class="nav-item">
+      <div class="nav-icon">🍽️</div>
+      <span>Meals</span>
+    </a>
+    <a href="recipes.html" class="nav-item active">
+      <div class="nav-icon">📖</div>
+      <span>Recipes</span>
+    </a>
+  </nav>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements
+      const recipesList = document.getElementById('recipesList');
+      const recipeDetail = document.getElementById('recipeDetail');
+      const recipeGrid = document.getElementById('recipeGrid');
+      const backToRecipes = document.getElementById('backToRecipes');
+      const searchInput = document.getElementById('searchInput');
+      const categories = document.querySelectorAll('.category');
+      const addRecipeBtn = document.getElementById('addRecipeBtn');
+      
+      // Sample recipes data
+      const recipes = [
+        {
+          id: 1,
+          title: 'Spaghetti Bolognese',
+          image: 'https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=500&q=80',
+          time: '30 mins',
+          servings: '4',
+          difficulty: 'Easy',
+          categories: ['Pasta', 'Beef'],
+          ingredients: [
+            '1 lb ground beef',
+            '1 onion, diced',
+            '2 cloves garlic, minced',
+            '1 can (28 oz) crushed tomatoes',
+            '1 tbsp olive oil',
+            '1 tsp dried oregano',
+            '1 tsp dried basil',
+            'Salt and pepper to taste',
+            '1 lb spaghetti',
+            'Grated Parmesan cheese for serving'
+          ],
+          instructions: [
+            'Heat olive oil in a large pan over medium heat. Add onions and garlic, cook until soft.',
+            'Add ground beef and cook until browned. Drain excess fat.',
+            'Add crushed tomatoes, oregano, basil, salt, and pepper. Simmer for 20 minutes.',
+            'Meanwhile, cook spaghetti according to package instructions until al dente.',
+            'Drain pasta and serve topped with sauce and grated Parmesan cheese.'
+          ]
+        },
+        {
+          id: 2,
+          title: 'Chicken Curry',
+          image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=500&q=80',
+          time: '45 mins',
+          servings: '4',
+          difficulty: 'Medium',
+          categories: ['Chicken'],
+          ingredients: [
+            '1.5 lbs chicken breast, diced',
+            '1 onion, diced',
+            '2 cloves garlic, minced',
+            '1 tbsp ginger, minced',
+            '2 tbsp curry powder',
+            '1 can (14 oz) coconut milk',
+            '1 tbsp vegetable oil',
+            'Salt to taste',
+            '2 cups rice'
+          ],
+          instructions: [
+            'Heat oil in a large pan. Add onions, garlic, and ginger. Cook until soft.',
+            'Add chicken and cook until no longer pink.',
+            'Add curry powder and stir to coat chicken.',
+            'Pour in coconut milk and bring to a simmer. Cook for 15-20 minutes.',
+            'Serve over cooked rice.'
+          ]
+        },
+        {
+          id: 3,
+          title: 'Vegetable Stir Fry',
+          image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=80',
+          time: '20 mins',
+          servings: '2',
+          difficulty: 'Easy',
+          categories: ['Quick & Easy', 'Vegetarian'],
+          ingredients: [
+            '2 cups mixed vegetables (bell peppers, broccoli, carrots, snow peas)',
+            '2 cloves garlic, minced',
+            '1 tbsp ginger, minced',
+            '2 tbsp soy sauce',
+            '1 tbsp sesame oil',
+            '1 tsp honey',
+            '1 cup rice, cooked'
+          ],
+          instructions: [
+            'Heat sesame oil in a wok or large pan over high heat.',
+            'Add garlic and ginger, stir for 30 seconds.',
+            'Add vegetables and stir fry for 5-7 minutes until crisp-tender.',
+            'Mix soy sauce and honey, then add to the pan. Stir to coat.',
+            'Serve immediately over cooked rice.'
+          ]
+        },
+        {
+          id: 4,
+          title: 'Caesar Salad',
+          image: 'https://images.unsplash.com/photo-1551248429-40975aa4de74?auto=format&fit=crop&w=500&q=80',
+          time: '15 mins',
+          servings: '2',
+          difficulty: 'Easy',
+          categories: ['Quick & Easy', 'Vegetarian'],
+          ingredients: [
+            '1 head romaine lettuce, chopped',
+            '1/4 cup Caesar dressing',
+            '1/4 cup croutons',
+            '2 tbsp grated Parmesan cheese',
+            'Fresh ground black pepper'
+          ],
+          instructions: [
+            'Wash and chop the romaine lettuce.',
+            'Toss with Caesar dressing.',
+            'Top with croutons, Parmesan cheese, and black pepper.',
+            'Serve immediately.'
+          ]
+        }
+      ];
+      
+      // Generate recipe cards
+      function generateRecipeCards(recipesToShow) {
+        recipeGrid.innerHTML = '';
+        
+        recipesToShow.forEach(recipe => {
+          const card = document.createElement('div');
+          card.className = 'recipe-card';
+          card.innerHTML = `
+            <img src="${recipe.image}" alt="${recipe.title}" class="recipe-image">
+            <div class="recipe-content">
+              <h3 class="recipe-title">${recipe.title}</h3>
+              <div class="recipe-meta">
+                <div><span class="meta-icon">⏱️</span> ${recipe.time}</div>
+                <div><span class="meta-icon">👥</span> ${recipe.servings}</div>
+              </div>
+            </div>
+          `;
+          
+          card.addEventListener('click', () => {
+            showRecipeDetail(recipe);
+          });
+          
+          recipeGrid.appendChild(card);
+        });
+      }
+      
+      // Show recipe detail
+      function showRecipeDetail(recipe) {
+        // Set recipe details
+        document.getElementById('detailImage').src = recipe.image;
+        document.getElementById('detailImage').alt = recipe.title;
+        document.getElementById('detailTitle').textContent = recipe.title;
+        document.getElementById('detailTime').querySelector('span:last-child').textContent = recipe.time;
+        document.getElementById('detailServings').querySelector('span:last-child').textContent = recipe.servings;
+        document.getElementById('detailDifficulty').querySelector('span:last-child').textContent = recipe.difficulty;
+        
+        // Generate ingredients
+        const ingredientsList = document.getElementById('ingredientsList');
+        ingredientsList.innerHTML = '';
+        
+        recipe.ingredients.forEach(ingredient => {
+          const li = document.createElement('li');
+          li.className = 'ingredient-item';
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'ingredient-checkbox';
+          
+          const text = document.createElement('span');
+          text.textContent = ingredient;
+          
+          li.appendChild(checkbox);
+          li.appendChild(text);
+          ingredientsList.appendChild(li);
+        });
+        
+        // Generate instructions
+        const instructionsList = document.getElementById('instructionsList');
+        instructionsList.innerHTML = '';
+        
+        recipe.instructions.forEach((instruction, index) => {
+          const step = document.createElement('div');
+          step.className = 'instruction-step';
+          
+          const number = document.createElement('div');
+          number.className = 'step-number';
+          number.textContent = (index + 1) + '.';
+          
+          const text = document.createElement('div');
+          text.textContent = instruction;
+          
+          step.appendChild(number);
+          step.appendChild(text);
+          instructionsList.appendChild(step);
+        });
+        
+        // Show detail view
+        recipeDetail.classList.add('active');
+      }
+      
+      // Initialize
+      generateRecipeCards(recipes);
+      
+      // Event listeners
+      backToRecipes.addEventListener('click', () => {
+        recipeDetail.classList.remove('active');
+      });
+      
+      searchInput.addEventListener('input', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filteredRecipes = recipes.filter(recipe => 
+          recipe.title.toLowerCase().includes(searchTerm)
+        );
+        generateRecipeCards(filteredRecipes);
+      });
+      
+      categories.forEach(category => {
+        category.addEventListener('click', function() {
+          // Remove active class from all categories
+          categories.forEach(c => c.classList.remove('active'));
+          
+          // Add active class to clicked category
+          this.classList.add('active');
+          
+          const selectedCategory = this.textContent;
+          
+          if (selectedCategory === 'All') {
+            generateRecipeCards(recipes);
+          } else {
+            const filteredRecipes = recipes.filter(recipe => 
+              recipe.categories.includes(selectedCategory)
+            );
+            generateRecipeCards(filteredRecipes);
+          }
+        });
+      });
+      
+      // Modal for adding to meal plan
+      document.getElementById('addToMealPlanBtn').addEventListener('click', function() {
+        const recipeName = document.getElementById('detailTitle').textContent;
+        window.location.href = `meal-plan.html?add=${encodeURIComponent(recipeName)}`;
+      });
+      
+      // Add to grocery list
+      document.getElementById('addToGroceryBtn').addEventListener('click', function() {
+        const ingredients = [];
+        document.querySelectorAll('.ingredient-checkbox:checked').forEach(checkbox => {
+          ingredients.push(checkbox.nextElementSibling.textContent);
+        });
+        
+        if (ingredients.length > 0) {
+          // Store selected ingredients
+          localStorage.setItem('selectedIngredients', JSON.stringify(ingredients));
+          alert(`${ingredients.length} ingredients added to grocery list`);
+        } else {
+          alert('Please select ingredients to add to your grocery list');
+        }
+      });
+      
+      // Add new recipe button
+      addRecipeBtn.addEventListener('click', function() {
+        alert('Add new recipe functionality would go here');
+      });
+    });
+  </script>
+</body>
+</html> 
