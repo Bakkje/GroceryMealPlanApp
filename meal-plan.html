@@ -44,11 +44,14 @@
     /* Header styles */
     .header {
       background-color: #4CAF50;
-      padding: 1rem;
+      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
+      padding: 1.2rem;
       color: white;
       text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       position: relative;
+      border-radius: 0 0 16px 16px;
+      margin-bottom: 1rem;
     }
     
     .back-button {
@@ -61,6 +64,11 @@
       background: none;
       border: none;
       cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .back-button:hover {
+      transform: translateY(-50%) scale(1.1);
     }
     
     /* Mobile friendly navigation */
@@ -72,8 +80,10 @@
       background-color: white;
       display: flex;
       justify-content: space-around;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
       z-index: 100;
+      border-radius: 16px 16px 0 0;
+      padding: 4px 0;
     }
     
     .nav-item {
@@ -85,10 +95,22 @@
       text-decoration: none;
       font-size: 0.75rem;
       width: 25%;
+      position: relative;
+      transition: all 0.2s;
     }
     
     .nav-item.active {
       color: #4CAF50;
+    }
+    
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      width: 40%;
+      height: 4px;
+      background-color: #4CAF50;
+      border-radius: 4px;
     }
     
     .nav-icon {
@@ -98,7 +120,7 @@
     
     /* Page specific styles */
     .page {
-      padding-bottom: 70px; /* Space for fixed navigation */
+      padding-bottom: 80px; /* Space for fixed navigation */
     }
     
     /* Meal plan styles */
@@ -106,33 +128,55 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 1rem 0;
+      margin: 1.2rem 0;
+      background: white;
+      padding: 0.8rem 1rem;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     
     .nav-arrow {
-      font-size: 1.25rem;
+      font-size: 1.4rem;
       background: none;
       border: none;
       cursor: pointer;
       padding: 0.5rem;
       color: #4CAF50;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    
+    .nav-arrow:hover {
+      background-color: rgba(76, 175, 80, 0.1);
     }
     
     .current-week {
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #333;
     }
     
     .day-card {
       background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 1rem;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 1.2rem;
       overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .day-card:active {
+      transform: scale(0.99);
     }
     
     .day-header {
       background-color: #f8f9fa;
-      padding: 0.75rem;
+      padding: 0.9rem 1.2rem;
       border-bottom: 1px solid #eee;
       display: flex;
       justify-content: space-between;
@@ -141,6 +185,7 @@
     
     .day-date {
       font-weight: 500;
+      color: #666;
     }
     
     .today {
@@ -149,19 +194,19 @@
     }
     
     .day-meals {
-      padding: 0.5rem;
+      padding: 0.8rem;
     }
     
     .meal-item {
-      padding: 0.75rem;
+      padding: 0.9rem 1.2rem;
       border-bottom: 1px solid #eee;
       display: flex;
       justify-content: space-between;
       align-items: center;
       background-color: white;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border-radius: 12px;
+      margin-bottom: 0.8rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
     
     .meal-item:last-child {
@@ -176,26 +221,44 @@
       background: none;
       border: none;
       cursor: pointer;
-      padding: 0.25rem;
-      margin-left: 0.5rem;
+      padding: 0.3rem 0.5rem;
+      margin-left: 0.7rem;
       color: #666;
-      font-size: 0.875rem;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .meal-action:hover {
+      background-color: #f1f1f1;
+      color: #333;
     }
     
     .add-meal {
       background-color: #f8f9fa;
       border: 1px dashed #ccc;
-      border-radius: 6px;
-      padding: 0.75rem;
+      border-radius: 12px;
+      padding: 0.9rem;
       text-align: center;
       color: #666;
       cursor: pointer;
-      margin: 0.5rem 0;
-      transition: background-color 0.2s;
+      margin: 0.8rem 0;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .add-meal:hover {
       background-color: #e9ecef;
+      border-color: #bbb;
+    }
+    
+    .add-meal::before {
+      content: '+';
+      font-size: 1.2rem;
+      margin-right: 0.5rem;
+      font-weight: 500;
     }
     
     /* Add meal modal */
@@ -206,7 +269,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0,0,0,0.5);
+      background-color: rgba(0,0,0,0.6);
       z-index: 1000;
       align-items: center;
       justify-content: center;
@@ -214,20 +277,38 @@
     
     .meal-modal.active {
       display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
     
     .meal-modal-content {
       background-color: white;
-      border-radius: 8px;
+      border-radius: 20px;
       width: 90%;
       max-width: 500px;
       max-height: 80vh;
       overflow-y: auto;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      animation: slideUp 0.4s ease;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     .meal-modal-header {
-      padding: 1rem;
+      padding: 1.2rem;
       border-bottom: 1px solid #eee;
       display: flex;
       justify-content: space-between;
@@ -235,60 +316,88 @@
     }
     
     .meal-modal-title {
-      font-size: 1.25rem;
-      font-weight: 500;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #333;
     }
     
     .meal-modal-close {
       background: none;
       border: none;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       cursor: pointer;
+      color: #666;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    
+    .meal-modal-close:hover {
+      background-color: #f1f1f1;
+      color: #333;
     }
     
     .meal-modal-body {
-      padding: 1rem;
+      padding: 1.5rem;
     }
     
     .meal-option {
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
     }
     
     .meal-option-title {
-      margin-bottom: 0.5rem;
-      font-weight: 500;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+      color: #333;
+      font-size: 1.1rem;
     }
     
     /* Form styles */
     .form-group {
-      margin-bottom: 1rem;
+      margin-bottom: 1.4rem;
     }
     
     .form-group label {
       display: block;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
+      font-weight: 500;
+      color: #555;
     }
     
     .form-group input, 
     .form-group select {
       width: 100%;
-      padding: 0.75rem;
+      padding: 0.85rem;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 12px;
       font-size: 1rem;
+      transition: all 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
     }
     
     .recipe-list {
-      max-height: 200px;
+      max-height: 220px;
       overflow-y: auto;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 12px;
+      background-color: #f9f9f9;
     }
     
     .recipe-item {
-      padding: 0.75rem;
+      padding: 0.9rem 1.2rem;
       border-bottom: 1px solid #eee;
       cursor: pointer;
+      transition: all 0.2s;
     }
     
     .recipe-item:last-child {
@@ -296,11 +405,19 @@
     }
     
     .recipe-item:hover {
-      background-color: #f8f9fa;
+      background-color: #f0f0f0;
+    }
+    
+    .recipe-item.selected {
+      background-color: #e8f5e9;
+      border-left: 3px solid #4CAF50;
+      padding-left: calc(1.2rem - 3px);
+      color: #2E7D32;
+      font-weight: 500;
     }
     
     .meal-modal-footer {
-      padding: 1rem;
+      padding: 1.2rem;
       border-top: 1px solid #eee;
       display: flex;
       justify-content: flex-end;
@@ -308,19 +425,26 @@
     
     /* Button styles */
     .btn {
-      padding: 0.6rem 1.2rem;
-      border-radius: 4px;
+      padding: 0.8rem 1.4rem;
+      border-radius: 12px;
       border: none;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
-      margin-left: 0.5rem;
+      transition: all 0.3s;
+      margin-left: 0.8rem;
     }
     
     .btn-primary {
       background-color: #4CAF50;
+      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
       color: white;
+      box-shadow: 0 2px 6px rgba(0,128,0,0.2);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: 0 4px 12px rgba(0,128,0,0.3);
+      transform: translateY(-2px);
     }
     
     .btn-secondary {
@@ -328,35 +452,47 @@
       color: #333;
     }
     
+    .btn-secondary:hover {
+      background-color: #e0e0e0;
+    }
+    
     /* Add button */
     .add-button {
       position: fixed;
-      bottom: 80px;
+      bottom: 85px;
       right: 20px;
-      width: 56px;
-      height: 56px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       background-color: #4CAF50;
+      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+      font-size: 2rem;
+      box-shadow: 0 4px 12px rgba(0,128,0,0.3);
       border: none;
       cursor: pointer;
       z-index: 10;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .add-button:hover, .add-button:active {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,128,0,0.4);
     }
     
     /* Improve UI for mobile view */
     .day-name {
       font-weight: 600;
+      font-size: 1.1rem;
+      color: #333;
     }
     
-    /* Fix recipe item selection in modal */
-    .recipe-item.selected {
-      background-color: #e8f5e9;
-      border-left: 3px solid #4CAF50;
+    /* Smooth transitions */
+    * {
+      transition: background-color 0.2s, opacity 0.2s, color 0.2s;
     }
   </style>
 </head>
