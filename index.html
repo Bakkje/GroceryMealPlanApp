@@ -1280,53 +1280,75 @@
           return;
         }
         
-        // Check if share code exists
-        if (!sharedLists[shareCode]) {
-          alert('Invalid share code. Please check and try again.');
-          return;
+        try {
+          // Validate share code format
+          if (shareCode.length !== 6 || !/^[A-Z0-9]+$/.test(shareCode)) {
+            alert('Share codes are 6 characters long and contain only letters and numbers');
+            return;
+          }
+          
+          // Check if share code exists
+          if (!sharedLists[shareCode]) {
+            alert('Invalid share code. Please check and try again.');
+            return;
+          }
+          
+          // Update user with share code
+          const email = localStorage.getItem('currentUserEmail');
+          users[email].shareCode = shareCode;
+          
+          // Save to localStorage
+          localStorage.setItem('appUsers', JSON.stringify(users));
+          localStorage.setItem('currentSharedCode', shareCode);
+          
+          // Update UI
+          updateUIAfterLogin();
+          
+          // Show success message with owner info
+          const ownerEmail = sharedLists[shareCode].owner;
+          alert(`Success! You've joined the shared list owned by ${ownerEmail}.
+          
+You can now view and edit the same grocery list.`);
+        } catch (error) {
+          console.error('Error joining shared list:', error);
+          alert('Error joining shared list: ' + error.message);
         }
-        
-        // Update user with share code
-        const email = localStorage.getItem('currentUserEmail');
-        users[email].shareCode = shareCode;
-        
-        // Save to localStorage
-        localStorage.setItem('appUsers', JSON.stringify(users));
-        localStorage.setItem('currentSharedCode', shareCode);
-        
-        // Update UI
-        updateUIAfterLogin();
-        
-        alert('You have successfully joined the shared list!');
       });
       
       // Create new list
       createNewListButton.addEventListener('click', function() {
         const email = localStorage.getItem('currentUserEmail');
         
-        // Generate a new share code
-        const shareCode = generateShareCode();
-        
-        // Update user with new share code
-        users[email].shareCode = shareCode;
-        
-        // Create empty shared list
-        sharedLists[shareCode] = {
-          owner: email,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          items: []
-        };
-        
-        // Save to localStorage
-        localStorage.setItem('appUsers', JSON.stringify(users));
-        localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
-        localStorage.setItem('currentSharedCode', shareCode);
-        
-        // Update UI
-        updateUIAfterLogin();
-        
-        alert(`New list created! Your share code is: ${shareCode}`);
+        try {
+          // Generate a new share code
+          const shareCode = generateShareCode();
+          
+          // Update user with new share code
+          users[email].shareCode = shareCode;
+          
+          // Create empty shared list
+          sharedLists[shareCode] = {
+            owner: email,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            items: []
+          };
+          
+          // Save to localStorage
+          localStorage.setItem('appUsers', JSON.stringify(users));
+          localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+          localStorage.setItem('currentSharedCode', shareCode);
+          
+          // Update UI
+          updateUIAfterLogin();
+          
+          alert(`New shared list created! Your share code is: ${shareCode}
+          
+Share this code with family members so they can access your grocery list.`);
+        } catch (error) {
+          console.error('Error creating new list:', error);
+          alert('Error creating new list: ' + error.message);
+        }
       });
       
       // Log out - completely rewritten
@@ -1388,38 +1410,43 @@
       
       // Copy share code to clipboard
       copyShareCode.addEventListener('click', function() {
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(currentSharedCode)
-            .then(() => {
+        try {
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(currentSharedCode)
+              .then(() => {
+                copyShareCode.textContent = "Copied!";
+                setTimeout(() => {
+                  copyShareCode.textContent = "Copy";
+                }, 2000);
+              })
+              .catch(err => {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy. Please copy the code manually.');
+              });
+          } else {
+            // Fallback for browsers without clipboard API
+            const textArea = document.createElement("textarea");
+            textArea.value = currentSharedCode;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+              document.execCommand('copy');
               copyShareCode.textContent = "Copied!";
               setTimeout(() => {
                 copyShareCode.textContent = "Copy";
               }, 2000);
-            })
-            .catch(err => {
+            } catch (err) {
               console.error('Could not copy text: ', err);
               alert('Failed to copy. Please copy the code manually.');
-            });
-        } else {
-          // Fallback for browsers without clipboard API
-          const textArea = document.createElement("textarea");
-          textArea.value = currentSharedCode;
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          
-          try {
-            document.execCommand('copy');
-            copyShareCode.textContent = "Copied!";
-            setTimeout(() => {
-              copyShareCode.textContent = "Copy";
-            }, 2000);
-          } catch (err) {
-            console.error('Could not copy text: ', err);
-            alert('Failed to copy. Please copy the code manually.');
+            }
+            
+            document.body.removeChild(textArea);
           }
-          
-          document.body.removeChild(textArea);
+        } catch (error) {
+          console.error('Error copying share code:', error);
+          alert('Error copying share code: ' + error.message);
         }
       });
       
