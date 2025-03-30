@@ -20,7 +20,7 @@
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-firestore-compat.js"></script>
   
   <!-- Cloud Sync Module -->
   <script src="cloud-sync.js"></script>
@@ -265,6 +265,7 @@
           
           cloudSync.onSyncComplete(() => {
             updateSyncStatus('Synced');
+            loadMeals(); // Refresh meals after sync
           });
           
           // Load initial meals
@@ -360,15 +361,7 @@
           return;
         }
         
-        cloudSync.getSharedLists()
-          .then(lists => {
-            let listData = lists[deviceInfo.shareCode] || {};
-            
-            // Update meal plan data
-            listData.mealPlan = meals;
-            
-            return cloudSync.updateSharedList(deviceInfo.shareCode, listData);
-          })
+        cloudSync.updateSharedList(deviceInfo.shareCode, { mealPlan: meals })
           .then(() => {
             updateSyncStatus('Synced');
           })
@@ -611,9 +604,7 @@
             });
             
             // Update list data
-            listData.items = groceryItems;
-            
-            return cloudSync.updateSharedList(deviceInfo.shareCode, listData);
+            return cloudSync.updateSharedList(deviceInfo.shareCode, { items: groceryItems });
           })
           .then(() => {
             updateSyncStatus('Synced');

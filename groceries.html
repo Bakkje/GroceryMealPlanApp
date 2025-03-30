@@ -20,7 +20,7 @@
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-firestore-compat.js"></script>
   
   <!-- Cloud Sync Module -->
   <script src="cloud-sync.js"></script>
@@ -196,6 +196,7 @@
           
           cloudSync.onSyncComplete(() => {
             updateSyncStatus('Synced');
+            loadGroceryItems(); // Refresh items after sync
           });
           
           // Load initial items
