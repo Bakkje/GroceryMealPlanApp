@@ -96,17 +96,58 @@
     .remember-me input:checked::after{content:'✓';position:absolute;color:white;font-size:12px;top:50%;left:50%;transform:translate(-50%,-50%)}
     .remember-me label{font-size:.95rem;color:#555}
     
-    /* Rest of your styles remain the same... */
-    
     /* Additional styles for improved UX */
     .form-error{color:#f44336;font-size:.85rem;margin-top:.5rem}
     .loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(76,175,80,0.3);border-radius:50%;border-top-color:#4CAF50;animation:spin 1s linear infinite;margin-right:10px}
     @keyframes spin{to{transform:rotate(360deg)}}
     
+    /* Import section styles */
+    .import-section {
+      margin-bottom: 25px;
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .import-section h3 {
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+    
+    .import-section button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+    }
+    
+    /* Mobile Footer Spacing */
+    .account-container {
+      padding-bottom: 120px; /* Extra padding to ensure content doesn't get hidden by bottom nav */
+    }
+    
+    /* App sections */
+    .app-section {
+      padding: 20px 0;
+      margin-bottom: 40px;
+    }
+    
+    .app-section:last-child {
+      margin-bottom: 100px; /* Extra margin at the bottom for mobile navigation */
+    }
+    
     /* Media Queries for Improved Responsiveness */
     @media (min-width:768px){
       .quick-actions{grid-template-columns:repeat(4,1fr)}
       .container{max-width:720px}
+      /* Reduce footer spacing on larger screens */
+      .account-container {
+        padding-bottom: 60px;
+      }
+      .app-section:last-child {
+        margin-bottom: 60px;
+      }
     }
     @media (min-width:992px){
       .container{max-width:960px}
@@ -329,57 +370,47 @@
             <button id="saveNewPassword" class="btn btn-primary">Save New Password</button>
           </div>
         </div>
+        
+        <!-- Export account data section -->
+        <div class="export-section" style="margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
+          <h3>Use on another device</h3>
+          <p>Export your account data to use on your phone or another device:</p>
+          <button id="exportAccountButton" class="btn primary-btn">Export Account Data</button>
+          <div id="exportResult" style="display: none; margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
+            <p>Copy this code to import on another device:</p>
+            <textarea id="exportCodeArea" rows="4" style="width: 100%; margin: 10px 0; border-radius: 5px; padding: 10px;" readonly></textarea>
+            <button id="copyExportCode" class="btn secondary-btn">Copy Code</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Add the export/import functionality -->
+  <!-- Updated Mobile-Friendly Account Container -->
   <div class="account-container">
-    <h2>Account</h2>
+    <h2>Quick Access</h2>
     
     <!-- Account info when logged in -->
-    <div id="accountInfo" style="display: none;">
-      <p>Logged in as: <span id="currentUserDisplay"></span></p>
+    <div id="accountInfoMobile" style="display: none;">
+      <p>Logged in as: <span id="currentUserDisplayMobile"></span></p>
       <div class="share-code-container">
         <p>Your Share Code:</p>
         <div class="share-code-box">
-          <span id="shareCodeDisplay"></span>
-          <button id="copyShareCode" class="btn secondary-btn">Copy</button>
+          <span id="shareCodeDisplayMobile"></span>
+          <button id="copyShareCodeMobile" class="btn secondary-btn">Copy</button>
         </div>
       </div>
-      <button id="logoutButton" class="btn danger-btn">Logout</button>
-      
-      <!-- Export account data section -->
-      <div class="export-section" style="margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
-        <h3>Use on another device</h3>
-        <p>Export your account data to use on your phone or another device:</p>
-        <button id="exportAccountButton" class="btn primary-btn">Export Account Data</button>
-        <div id="exportResult" style="display: none; margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
-          <p>Copy this code to import on another device:</p>
-          <textarea id="exportCodeArea" rows="4" style="width: 100%; margin: 10px 0; border-radius: 5px; padding: 10px;" readonly></textarea>
-          <button id="copyExportCode" class="btn secondary-btn">Copy Code</button>
-        </div>
-      </div>
+      <button id="logoutButtonMobile" class="btn danger-btn">Logout</button>
     </div>
     
     <!-- Account forms when not logged in -->
-    <div id="accountForms">
+    <div id="accountFormsMobile">
       <!-- Login form -->
-      <div id="accountLoginForm">
-        <h3>Login</h3>
-        <div class="form-group">
-          <label for="loginEmail">Email:</label>
-          <input type="email" id="loginEmail" required>
-        </div>
-        <div class="form-group">
-          <label for="loginPassword">Password:</label>
-          <input type="password" id="loginPassword" required>
-        </div>
-        <button id="accountLoginButton" class="btn primary-btn">Login</button>
-        <p>Don't have an account? <a href="#" id="showSignupLink">Sign up</a></p>
+      <div id="accountLoginFormMobile">
+        <h3>Quick Access</h3>
         
-        <!-- Import account data section -->
-        <div class="import-section" style="margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
+        <!-- Import account data section - Moved to top for mobile accessibility -->
+        <div class="import-section">
           <h3>Import Account from Another Device</h3>
           <p>Have an account on another device? Import it here:</p>
           <div class="form-group">
@@ -391,8 +422,8 @@
     </div>
   </div>
 
-  <!-- Add offline indicator -->
-  <div id="offlineIndicator" style="display: none; position: fixed; bottom: 70px; left: 0; right: 0; background-color: #f44336; color: white; text-align: center; padding: 8px; z-index: 1000;">
+  <!-- Add offline indicator - Increased bottom margin to ensure visibility above navigation bar -->
+  <div id="offlineIndicator" style="display: none; position: fixed; bottom: 90px; left: 0; right: 0; background-color: #f44336; color: white; text-align: center; padding: 8px; z-index: 1000;">
     You are offline. Changes will be saved locally.
   </div>
   
@@ -567,6 +598,12 @@
           const currentUserDisplay = document.getElementById('currentUserDisplay');
           const shareCodeDisplay = document.getElementById('shareCodeDisplay');
           
+          // Mobile elements
+          const accountInfoMobile = document.getElementById('accountInfoMobile');
+          const accountFormsMobile = document.getElementById('accountFormsMobile');
+          const currentUserDisplayMobile = document.getElementById('currentUserDisplayMobile');
+          const shareCodeDisplayMobile = document.getElementById('shareCodeDisplayMobile');
+          
           if (currentUserEmail && currentSharedCode) {
             // User is logged in
             console.log('User is logged in - updating UI elements');
@@ -600,6 +637,12 @@
             if (accountInfo) accountInfo.style.display = 'block';
             if (currentUserDisplay) currentUserDisplay.textContent = currentUserEmail;
             if (shareCodeDisplay) shareCodeDisplay.textContent = currentSharedCode;
+            
+            // Update mobile elements
+            if (accountInfoMobile) accountInfoMobile.style.display = 'block';
+            if (accountFormsMobile) accountFormsMobile.style.display = 'none';
+            if (currentUserDisplayMobile) currentUserDisplayMobile.textContent = currentUserEmail;
+            if (shareCodeDisplayMobile) shareCodeDisplayMobile.textContent = currentSharedCode;
           } else {
             // User is not logged in
             console.log('User is not logged in - updating UI elements');
@@ -615,6 +658,10 @@
             
             // Update account info section (new UI)
             if (accountInfo) accountInfo.style.display = 'none';
+            
+            // Update mobile elements
+            if (accountInfoMobile) accountInfoMobile.style.display = 'none';
+            if (accountFormsMobile) accountFormsMobile.style.display = 'block';
             
             // Show login form
             const accountLoginForm = document.getElementById('accountLoginForm');
@@ -787,8 +834,81 @@
         });
       }
       
-      // The rest of your JavaScript remains mostly unchanged...
-      // Include all the remaining functions and event listeners
+      // Add mobile-specific event listeners
+      const logoutButtonMobile = document.getElementById('logoutButtonMobile');
+      if (logoutButtonMobile) {
+        logoutButtonMobile.addEventListener('click', function() {
+          try {
+            // Remove user session
+            localStorage.removeItem('currentUserEmail');
+            localStorage.removeItem('currentSharedCode');
+            
+            // Update UI
+            updateUIAfterLogin();
+            
+            console.log('User logged out');
+            alert('You have been logged out successfully.');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch (error) {
+            console.error('Error in logout button event:', error);
+            alert('Error during logout: ' + error.message);
+          }
+        });
+      }
+      
+      const copyShareCodeMobile = document.getElementById('copyShareCodeMobile');
+      if (copyShareCodeMobile) {
+        copyShareCodeMobile.addEventListener('click', function() {
+          try {
+            const shareCodeDisplayMobile = document.getElementById('shareCodeDisplayMobile');
+            if (!shareCodeDisplayMobile) {
+              console.error('shareCodeDisplayMobile element not found');
+              return;
+            }
+            
+            const currentSharedCode = shareCodeDisplayMobile.textContent;
+            
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(currentSharedCode)
+                .then(() => {
+                  copyShareCodeMobile.textContent = "Copied!";
+                  setTimeout(() => {
+                    copyShareCodeMobile.textContent = "Copy";
+                  }, 2000);
+                })
+                .catch(err => {
+                  console.error('Could not copy text: ', err);
+                  alert('Failed to copy. Please copy the code manually.');
+                });
+            } else {
+              // Fallback for browsers without clipboard API
+              const textArea = document.createElement("textarea");
+              textArea.value = currentSharedCode;
+              document.body.appendChild(textArea);
+              textArea.focus();
+              textArea.select();
+              
+              try {
+                document.execCommand('copy');
+                copyShareCodeMobile.textContent = "Copied!";
+                setTimeout(() => {
+                  copyShareCodeMobile.textContent = "Copy";
+                }, 2000);
+              } catch (err) {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy. Please copy the code manually.');
+              }
+              
+              document.body.removeChild(textArea);
+            }
+          } catch (error) {
+            console.error('Error copying share code:', error);
+            alert('Error copying share code: ' + error.message);
+          }
+        });
+      }
       
       // Initialize UI based on login state
       updateUIAfterLogin();
