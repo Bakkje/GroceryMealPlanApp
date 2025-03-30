@@ -1,24 +1,65 @@
 {
   "name": "Grocery & Meal Planner",
   "short_name": "Meal Planner",
-  "description": "Plan meals and manage grocery lists",
-  "start_url": "index.html",
+  "description": "Plan your meals and manage grocery lists with easy sharing and organization",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "app-icon.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "app-icon.svg",
+      "src": "app-icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "app-icon-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Grocery List",
+      "short_name": "Groceries",
+      "description": "View your grocery shopping list",
+      "url": "/groceries.html",
+      "icons": [{ "src": "grocery-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Meal Plan",
+      "short_name": "Meals",
+      "description": "View your weekly meal plan",
+      "url": "/meal-plan.html",
+      "icons": [{ "src": "meal-icon.png", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["food", "lifestyle", "productivity"],
+  "screenshots": [
+    {
+      "src": "screenshot1.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "Home Screen of Grocery & Meal Planner App"
+    },
+    {
+      "src": "screenshot2.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "Grocery List Screen"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 } 
