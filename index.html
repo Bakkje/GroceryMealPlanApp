@@ -27,7 +27,7 @@
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-firestore-compat.js"></script>
   
   <!-- Cloud Sync Module -->
   <script src="cloud-sync.js"></script>
@@ -414,6 +414,18 @@
             console.log('Cloud sync initialized');
             updateShareCode();
             updateGroceryCounter();
+            
+            // Add sync status indicators
+            window.cloudSync.onSyncStart(() => {
+              console.log('Sync started');
+              // You could add a visual indicator here
+            });
+            
+            window.cloudSync.onSyncComplete(() => {
+              console.log('Sync completed');
+              updateGroceryCounter();
+              // You could update UI elements here
+            });
           })
           .catch(error => {
             console.error('Error initializing cloud sync:', error);
