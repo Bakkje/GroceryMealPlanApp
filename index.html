@@ -973,46 +973,81 @@
           console.log('updateUIAfterLogin - currentUserEmail:', currentUserEmail);
           console.log('updateUIAfterLogin - currentSharedCode:', currentSharedCode);
           
+          // Get all UI elements
+          const profileSection = document.getElementById('profileSection');
+          const authForms = document.getElementById('authForms');
+          const accountInfo = document.getElementById('accountInfo');
+          const loginMessage = document.getElementById('loginMessage');
+          const userInfoHeader = document.getElementById('userInfo');
+          const headerLoginButton = document.getElementById('headerLoginButton');
+          const userAvatar = document.getElementById('userAvatar');
+          const userName = document.getElementById('userName');
+          const profileEmail = document.getElementById('profileEmail');
+          const shareCodeText = document.getElementById('shareCodeText');
+          const currentUserDisplay = document.getElementById('currentUserDisplay');
+          const shareCodeDisplay = document.getElementById('shareCodeDisplay');
+          
           if (currentUserEmail && currentSharedCode) {
             // User is logged in
-            console.log('User is logged in');
+            console.log('User is logged in - updating UI elements');
             
-            // Hide login/signup forms and show account info
-            const accountForms = document.getElementById('accountForms');
-            const accountInfo = document.getElementById('accountInfo');
+            // Handle header elements
+            if (userInfoHeader) {
+              userInfoHeader.style.display = 'flex';
+              if (headerLoginButton) headerLoginButton.style.display = 'none';
+            }
             
-            if (accountForms) accountForms.style.display = 'none';
+            // Update profile section elements
+            if (profileSection) profileSection.classList.add('active');
+            if (authForms) authForms.style.display = 'none';
+            if (loginMessage) loginMessage.style.display = 'none';
+            if (profileEmail) profileEmail.textContent = currentUserEmail;
+            if (shareCodeText) shareCodeText.textContent = currentSharedCode;
+            
+            // Update user avatar
+            if (userAvatar && currentUserEmail) {
+              const initial = currentUserEmail.charAt(0).toUpperCase();
+              userAvatar.textContent = initial;
+            }
+            
+            // Update user name in header
+            if (userName && currentUserEmail) {
+              const name = currentUserEmail.split('@')[0];
+              userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+            }
+            
+            // Update account info section (new UI)
             if (accountInfo) accountInfo.style.display = 'block';
-            
-            // Update displayed user email and share code
-            const currentUserDisplay = document.getElementById('currentUserDisplay');
-            const shareCodeDisplay = document.getElementById('shareCodeDisplay');
-            
             if (currentUserDisplay) currentUserDisplay.textContent = currentUserEmail;
             if (shareCodeDisplay) shareCodeDisplay.textContent = currentSharedCode;
-            
-            // Store globally for easy access
-            window.currentUserEmail = currentUserEmail;
-            window.currentSharedCode = currentSharedCode;
           } else {
             // User is not logged in
-            console.log('User is not logged in');
+            console.log('User is not logged in - updating UI elements');
+            
+            // Handle header elements
+            if (userInfoHeader) userInfoHeader.style.display = 'none';
+            if (headerLoginButton) headerLoginButton.style.display = 'block';
+            
+            // Update profile section elements
+            if (profileSection) profileSection.classList.remove('active');
+            if (authForms) authForms.style.display = 'block';
+            if (loginMessage) loginMessage.style.display = 'block';
+            
+            // Update account info section (new UI)
+            if (accountInfo) accountInfo.style.display = 'none';
             
             // Show login form
-            const accountForms = document.getElementById('accountForms');
-            const accountInfo = document.getElementById('accountInfo');
             const accountLoginForm = document.getElementById('accountLoginForm');
             const signupForm = document.getElementById('signupForm');
             const joinListForm = document.getElementById('joinListForm');
             
-            if (accountForms) accountForms.style.display = 'block';
-            if (accountInfo) accountInfo.style.display = 'none';
             if (accountLoginForm) accountLoginForm.style.display = 'block';
             if (signupForm) signupForm.style.display = 'none';
             if (joinListForm) joinListForm.style.display = 'none';
           }
         } catch (error) {
           console.error('Error in updateUIAfterLogin:', error);
+          alert('Error updating UI after login: ' + error.message);
         }
       }
       
