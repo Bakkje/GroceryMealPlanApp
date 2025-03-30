@@ -3,353 +3,401 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grocery List</title>
+  <title>Grocery List - Grocery & Meal Planner</title>
+  
+  <!-- SEO Improvements -->
+  <meta name="description" content="Manage your grocery shopping list with our easy-to-use app. Add items, check them off, and share with family members.">
+  <meta name="keywords" content="grocery list, shopping list, food planning">
   
   <!-- PWA Support -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4CAF50">
+  <link rel="icon" href="app-icon.svg">
+  <link rel="apple-touch-icon" href="app-icon.png">
   
   <!-- Firebase Configuration -->
   <script src="firebase-config.js"></script>
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
   
   <!-- Cloud Sync Module -->
   <script src="cloud-sync.js"></script>
   
   <style>
-    body { 
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    h1 {
-      color: #4CAF50;
-      text-align: center;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    input {
-      width: 70%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    button {
-      padding: 10px 15px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      background-color: white;
-      margin-bottom: 10px;
-      padding: 15px;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-    }
-    li.checked {
-      opacity: 0.6;
-      text-decoration: line-through;
-    }
-    .checkbox {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      border: 2px solid #4CAF50;
-      margin-right: 15px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .checkbox.checked:after {
-      content: '✓';
-      color: #4CAF50;
-      font-weight: bold;
-    }
-    .delete-btn {
-      margin-left: auto;
-      color: #ff5252;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .status {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #666;
-    }
-    .nav {
-      text-align: center;
-      margin-top: 30px;
-    }
-    .nav a {
-      color: #4CAF50;
-      text-decoration: none;
-      margin: 0 10px;
+    /* Base styles */
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Open Sans','Helvetica Neue',sans-serif;line-height:1.6;color:#333;background-color:#f8f9fa;max-width:100%;overflow-x:hidden}
+    .container{width:100%;padding:0 15px;margin:0 auto;max-width:100%}
+    h1,h2,h3,h4{margin-bottom:.5rem;line-height:1.2}
+    
+    /* Header styles */
+    .header{background-color:#4CAF50;color:#fff;padding:1rem;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+    .header h1{margin:0;font-size:1.5rem}
+    .header-back{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#fff;text-decoration:none;font-size:1.2rem}
+    
+    /* Grocery list styles */
+    .grocery-list{margin:1rem 0;border-radius:10px;overflow:hidden}
+    .grocery-item{display:flex;align-items:center;background-color:#fff;padding:1rem;border-bottom:1px solid #eee}
+    .grocery-item:last-child{border-bottom:none}
+    .grocery-checkbox{margin-right:1rem;width:20px;height:20px}
+    .grocery-text{flex:1;font-size:1.1rem}
+    .grocery-item.checked .grocery-text{text-decoration:line-through;color:#999}
+    .grocery-delete{background:none;border:none;color:#f44336;font-size:1.2rem;cursor:pointer}
+    
+    /* Add item form */
+    .add-item-form{display:flex;margin:1rem 0;margin-bottom:80px}
+    .add-item-input{flex:1;padding:1rem;border:1px solid #ddd;border-radius:10px 0 0 10px;font-size:1rem}
+    .add-item-btn{background-color:#4CAF50;color:#fff;border:none;padding:1rem;border-radius:0 10px 10px 0;font-size:1rem;cursor:pointer}
+    
+    /* Offline indicator */
+    .offline-indicator{display:none;background-color:#f44336;color:#fff;text-align:center;padding:0.5rem;position:fixed;bottom:60px;left:0;right:0;z-index:50}
+    
+    /* Share code section */
+    .share-section{margin:1rem 0;padding:1rem;background-color:#f0f7f0;border-radius:10px}
+    .share-code{font-size:1.2rem;font-weight:bold;color:#2E7D32;margin:0.5rem 0;letter-spacing:2px}
+    .share-section button{background-color:#4CAF50;color:#fff;border:none;padding:0.5rem 1rem;border-radius:5px;cursor:pointer;margin-top:0.5rem}
+    
+    /* Mobile Navigation */
+    .mobile-nav{position:fixed;bottom:0;left:0;width:100%;background-color:white;display:flex;justify-content:space-around;box-shadow:0 -4px 12px rgba(0,0,0,0.1);z-index:100;padding:10px 0}
+    .nav-item{display:flex;flex-direction:column;align-items:center;padding:5px 0;color:#666;text-decoration:none;font-size:.75rem;width:25%}
+    .nav-item.active{color:#4CAF50}
+    .nav-icon{font-size:1.2rem;margin-bottom:4px}
+    
+    /* Sync status indicator */
+    .sync-status{display:flex;align-items:center;justify-content:center;margin:0.5rem 0;font-size:0.8rem;color:#666}
+    .sync-indicator{width:10px;height:10px;background-color:#ccc;border-radius:50%;margin-right:5px}
+    .sync-indicator.synced{background-color:#4CAF50}
+    .sync-indicator.syncing{background-color:#FFC107;animation:pulse 1.5s infinite}
+    @keyframes pulse{0%{opacity:0.5}50%{opacity:1}100%{opacity:0.5}}
+    
+    /* Media Queries */
+    @media (min-width:768px){
+      .container{max-width:720px}
     }
   </style>
 </head>
 <body>
+  <header class="header">
+    <a href="index.html" class="header-back">←</a>
+    <h1>My Grocery List</h1>
+  </header>
+  
   <div class="container">
-    <h1>Grocery List</h1>
-    
-    <div id="status" class="status">Loading items...</div>
-    
-    <div class="form-group">
-      <input type="text" id="itemInput" placeholder="Add new item...">
-      <button id="addButton">Add</button>
+    <div class="sync-status">
+      <div id="syncIndicator" class="sync-indicator"></div>
+      <span id="syncStatus">Loading...</span>
     </div>
     
-    <ul id="groceryList"></ul>
-    
-    <div class="nav">
-      <a href="index.html">Back to Home</a>
+    <div class="share-section">
+      <h3>Your Share Code</h3>
+      <p>Share this code with family members to sync your list</p>
+      <div class="share-code" id="shareCode"></div>
+      <button id="copyShareCodeBtn">Copy Code</button>
     </div>
+    
+    <div id="groceryList" class="grocery-list">
+      <!-- Items will be added here dynamically -->
+      <div class="grocery-item">
+        <input type="checkbox" class="grocery-checkbox">
+        <span class="grocery-text">Loading items...</span>
+      </div>
+    </div>
+    
+    <form id="addItemForm" class="add-item-form">
+      <input type="text" id="newItemInput" class="add-item-input" placeholder="Add a new item..." required>
+      <button type="submit" class="add-item-btn">Add</button>
+    </form>
   </div>
   
+  <!-- Offline indicator -->
+  <div id="offlineIndicator" class="offline-indicator">
+    You are offline. Changes will sync when you're back online.
+  </div>
+  
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav">
+    <a href="index.html" class="nav-item">
+      <div class="nav-icon">🏠</div>
+      <span>Home</span>
+    </a>
+    <a href="groceries.html" class="nav-item active">
+      <div class="nav-icon">🛒</div>
+      <span>Grocery</span>
+    </a>
+    <a href="meal-plan.html" class="nav-item">
+      <div class="nav-icon">🍽️</div>
+      <span>Meals</span>
+    </a>
+    <a href="recipes.html" class="nav-item">
+      <div class="nav-icon">📖</div>
+      <span>Recipes</span>
+    </a>
+  </nav>
+  
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
       // Elements
-      const statusEl = document.getElementById('status');
-      const itemInput = document.getElementById('itemInput');
-      const addButton = document.getElementById('addButton');
       const groceryList = document.getElementById('groceryList');
+      const addItemForm = document.getElementById('addItemForm');
+      const newItemInput = document.getElementById('newItemInput');
+      const offlineIndicator = document.getElementById('offlineIndicator');
+      const syncIndicator = document.getElementById('syncIndicator');
+      const syncStatus = document.getElementById('syncStatus');
+      const shareCodeElement = document.getElementById('shareCode');
+      const copyShareCodeBtn = document.getElementById('copyShareCodeBtn');
       
-      // Variables
-      let groceryItems = [];
+      // Check online status
+      if (!navigator.onLine) {
+        offlineIndicator.style.display = 'block';
+      }
       
-      // Initialize
-      init();
+      window.addEventListener('online', function() {
+        offlineIndicator.style.display = 'none';
+        updateSyncStatus('Syncing...');
+      });
       
-      function init() {
-        // Add event listener for add button
-        addButton.addEventListener('click', addItem);
+      window.addEventListener('offline', function() {
+        offlineIndicator.style.display = 'block';
+        updateSyncStatus('Offline');
+      });
+      
+      // Initialize cloud sync
+      let currentItems = [];
+      
+      function updateSyncStatus(status) {
+        syncStatus.textContent = status;
         
-        // Add event listener for enter key
-        itemInput.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') {
-            addItem();
-          }
-        });
-        
-        // Initialize cloud sync
-        if (window.cloudSync) {
-          statusEl.textContent = 'Connecting to sync service...';
-          
-          cloudSync.init()
-            .then(() => {
-              statusEl.textContent = 'Connected! Loading items...';
-              
-              // Check if user is logged in
-              const currentUser = cloudSync.getCurrentUser();
-              
-              if (currentUser.email && currentUser.shareCode) {
-                loadItems();
-              } else {
-                statusEl.textContent = 'Please log in to sync your grocery list.';
-                loadLocalItems();
-              }
-            })
-            .catch(error => {
-              console.error('Error initializing cloud sync:', error);
-              statusEl.textContent = 'Error connecting to sync service. Using local storage.';
-              loadLocalItems();
-            });
+        if (status === 'Synced') {
+          syncIndicator.className = 'sync-indicator synced';
+        } else if (status === 'Syncing...') {
+          syncIndicator.className = 'sync-indicator syncing';
         } else {
-          statusEl.textContent = 'Sync service not available. Using local storage.';
-          loadLocalItems();
+          syncIndicator.className = 'sync-indicator';
         }
       }
       
-      function loadItems() {
-        const currentUser = cloudSync.getCurrentUser();
+      // Initialize cloud sync and load items
+      cloudSync.init()
+        .then(() => {
+          updateSyncStatus('Connected');
+          
+          // Display share code
+          const deviceInfo = cloudSync.getCurrentDevice();
+          if (deviceInfo.shareCode) {
+            shareCodeElement.textContent = deviceInfo.shareCode;
+          }
+          
+          // Set up sync listeners
+          cloudSync.onSyncStart(() => {
+            updateSyncStatus('Syncing...');
+          });
+          
+          cloudSync.onSyncComplete(() => {
+            updateSyncStatus('Synced');
+          });
+          
+          // Load initial items
+          loadGroceryItems();
+        })
+        .catch(error => {
+          console.error('Error initializing cloud sync:', error);
+          updateSyncStatus('Connection error');
+        });
+      
+      // Copy share code
+      if (copyShareCodeBtn) {
+        copyShareCodeBtn.addEventListener('click', function() {
+          const code = shareCodeElement.textContent;
+          
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(code)
+              .then(() => {
+                copyShareCodeBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                  copyShareCodeBtn.textContent = 'Copy Code';
+                }, 2000);
+              })
+              .catch(err => {
+                alert('Failed to copy. Please copy manually.');
+              });
+          } else {
+            // Fallback
+            const textArea = document.createElement('textarea');
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+              document.execCommand('copy');
+              copyShareCodeBtn.textContent = 'Copied!';
+              setTimeout(() => {
+                copyShareCodeBtn.textContent = 'Copy Code';
+              }, 2000);
+            } catch (err) {
+              alert('Failed to copy. Please copy manually.');
+            }
+            
+            document.body.removeChild(textArea);
+          }
+        });
+      }
+      
+      // Load grocery items from cloud
+      function loadGroceryItems() {
+        updateSyncStatus('Loading...');
+        
+        const deviceInfo = cloudSync.getCurrentDevice();
+        if (!deviceInfo || !deviceInfo.shareCode) {
+          console.warn('No share code available');
+          renderGroceryItems([]);
+          updateSyncStatus('No list connected');
+          return;
+        }
         
         cloudSync.getSharedLists()
           .then(lists => {
-            if (!lists[currentUser.shareCode]) {
-              // Create a new list if it doesn't exist
-              statusEl.textContent = 'Creating new grocery list...';
-              const newList = {
-                owner: currentUser.email,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                items: []
-              };
-              
-              return cloudSync.saveSharedList(currentUser.shareCode, newList)
-                .then(() => {
-                  groceryItems = [];
-                  renderItems();
-                  statusEl.textContent = 'New grocery list created!';
-                });
+            const listData = lists[deviceInfo.shareCode];
+            
+            if (!listData) {
+              console.warn('No list data found for code:', deviceInfo.shareCode);
+              currentItems = [];
             } else {
-              // Use existing list
-              const listData = lists[currentUser.shareCode];
-              groceryItems = listData.items || [];
-              renderItems();
-              statusEl.textContent = groceryItems.length > 0 
-                ? `${groceryItems.length} item${groceryItems.length !== 1 ? 's' : ''} in your list` 
-                : 'Your grocery list is empty. Add some items!';
+              currentItems = listData.items || [];
             }
+            
+            renderGroceryItems(currentItems);
+            updateSyncStatus('Synced');
           })
           .catch(error => {
-            console.error('Error loading items:', error);
-            statusEl.textContent = 'Error loading items. Using local storage.';
-            loadLocalItems();
+            console.error('Error loading grocery items:', error);
+            renderGroceryItems([]);
+            updateSyncStatus('Load error');
           });
       }
       
-      function loadLocalItems() {
-        try {
-          const savedItems = localStorage.getItem('groceryItems');
-          if (savedItems) {
-            groceryItems = JSON.parse(savedItems);
-          } else {
-            groceryItems = [];
-          }
-          renderItems();
-          statusEl.textContent = groceryItems.length > 0 
-            ? `${groceryItems.length} item${groceryItems.length !== 1 ? 's' : ''} in your list (local)` 
-            : 'Your grocery list is empty. Add some items!';
-        } catch (error) {
-          console.error('Error loading local items:', error);
-          groceryItems = [];
-          renderItems();
-          statusEl.textContent = 'Error loading local items.';
-        }
-      }
-      
-      function saveItems() {
-        statusEl.textContent = 'Saving...';
-        
-        const currentUser = cloudSync.getCurrentUser();
-        
-        if (currentUser.email && currentUser.shareCode) {
-          // Save to cloud
-          cloudSync.getSharedLists()
-            .then(lists => {
-              let listData = lists[currentUser.shareCode];
-              
-              if (!listData) {
-                listData = {
-                  owner: currentUser.email,
-                  createdAt: new Date().toISOString(),
-                  shareCode: currentUser.shareCode
-                };
-              }
-              
-              listData.items = groceryItems;
-              listData.updatedAt = new Date().toISOString();
-              
-              return cloudSync.saveSharedList(currentUser.shareCode, listData);
-            })
-            .then(() => {
-              statusEl.textContent = 'List saved to cloud!';
-              saveLocalItems(); // Also save locally as backup
-            })
-            .catch(error => {
-              console.error('Error saving to cloud:', error);
-              statusEl.textContent = 'Error saving to cloud. Saved locally.';
-              saveLocalItems();
-            });
-        } else {
-          // Save locally only
-          saveLocalItems();
-        }
-      }
-      
-      function saveLocalItems() {
-        try {
-          localStorage.setItem('groceryItems', JSON.stringify(groceryItems));
-          if (!cloudSync.getCurrentUser().email) {
-            statusEl.textContent = 'List saved locally!';
-          }
-        } catch (error) {
-          console.error('Error saving locally:', error);
-          statusEl.textContent = 'Error saving locally.';
-        }
-      }
-      
-      function renderItems() {
+      // Render grocery items to DOM
+      function renderGroceryItems(items) {
         groceryList.innerHTML = '';
         
-        groceryItems.forEach((item, index) => {
-          const li = document.createElement('li');
-          if (item.checked) {
-            li.classList.add('checked');
-          }
+        if (!items || items.length === 0) {
+          const emptyMessage = document.createElement('div');
+          emptyMessage.className = 'grocery-item';
+          emptyMessage.innerHTML = '<span class="grocery-text">Your grocery list is empty</span>';
+          groceryList.appendChild(emptyMessage);
+          return;
+        }
+        
+        items.forEach(item => {
+          const itemElement = document.createElement('div');
+          itemElement.className = 'grocery-item' + (item.checked ? ' checked' : '');
+          itemElement.dataset.id = item.id;
           
-          const checkbox = document.createElement('div');
-          checkbox.className = 'checkbox';
-          if (item.checked) {
-            checkbox.classList.add('checked');
-          }
-          checkbox.addEventListener('click', () => toggleItem(index));
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'grocery-checkbox';
+          checkbox.checked = item.checked || false;
           
-          const text = document.createElement('span');
-          text.textContent = item.text;
-          text.addEventListener('click', () => toggleItem(index));
+          const textElement = document.createElement('span');
+          textElement.className = 'grocery-text';
+          textElement.textContent = item.text;
           
-          const deleteBtn = document.createElement('span');
-          deleteBtn.className = 'delete-btn';
-          deleteBtn.textContent = '✕';
-          deleteBtn.addEventListener('click', () => deleteItem(index));
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'grocery-delete';
+          deleteButton.innerHTML = '×';
+          deleteButton.setAttribute('aria-label', 'Delete item');
           
-          li.appendChild(checkbox);
-          li.appendChild(text);
-          li.appendChild(deleteBtn);
-          groceryList.appendChild(li);
+          itemElement.appendChild(checkbox);
+          itemElement.appendChild(textElement);
+          itemElement.appendChild(deleteButton);
+          groceryList.appendChild(itemElement);
+          
+          // Event listeners
+          checkbox.addEventListener('change', function() {
+            toggleItemChecked(item.id, this.checked);
+          });
+          
+          deleteButton.addEventListener('click', function() {
+            deleteItem(item.id);
+          });
         });
       }
       
-      function addItem() {
-        const text = itemInput.value.trim();
+      // Add a new item
+      addItemForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const text = newItemInput.value.trim();
         if (!text) return;
         
-        groceryItems.push({
-          text,
+        const newItem = {
+          id: Date.now().toString(),
+          text: text,
           checked: false,
-          createdAt: new Date().toISOString()
-        });
+          timestamp: Date.now()
+        };
         
+        // Add to local array
+        currentItems.push(newItem);
+        
+        // Update UI
+        renderGroceryItems(currentItems);
+        
+        // Sync to cloud
         saveItems();
-        renderItems();
         
-        itemInput.value = '';
-        itemInput.focus();
+        // Clear input
+        newItemInput.value = '';
+      });
+      
+      // Toggle item checked state
+      function toggleItemChecked(id, checked) {
+        const index = currentItems.findIndex(item => item.id === id);
+        if (index !== -1) {
+          currentItems[index].checked = checked;
+          saveItems();
+        }
       }
       
-      function toggleItem(index) {
-        groceryItems[index].checked = !groceryItems[index].checked;
+      // Delete an item
+      function deleteItem(id) {
+        currentItems = currentItems.filter(item => item.id !== id);
+        renderGroceryItems(currentItems);
         saveItems();
-        renderItems();
       }
       
-      function deleteItem(index) {
-        groceryItems.splice(index, 1);
-        saveItems();
-        renderItems();
+      // Save items to cloud
+      function saveItems() {
+        updateSyncStatus('Syncing...');
+        
+        const deviceInfo = cloudSync.getCurrentDevice();
+        if (!deviceInfo || !deviceInfo.shareCode) {
+          console.warn('No share code available, cannot save');
+          updateSyncStatus('Not connected');
+          return;
+        }
+        
+        cloudSync.updateSharedList(deviceInfo.shareCode, { items: currentItems })
+          .then(() => {
+            updateSyncStatus('Synced');
+          })
+          .catch(error => {
+            console.error('Error saving items:', error);
+            updateSyncStatus('Sync error');
+          });
+      }
+      
+      // Register service worker for offline support
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('ServiceWorker registration failed:', error);
+          });
       }
     });
   </script>

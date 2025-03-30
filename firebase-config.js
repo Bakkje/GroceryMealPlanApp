@@ -1,20 +1,33 @@
-// Firebase Configuration
-// Replace these values with your actual Firebase project config
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC_YOUR_API_KEY_HERE",
-  authDomain: "grocery-meal-planner.firebaseapp.com",
-  databaseURL: "https://grocery-meal-planner-default-rtdb.firebaseio.com",
-  projectId: "grocery-meal-planner",
-  storageBucket: "grocery-meal-planner.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef1234567890"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
-// Instructions:
-// 1. Create a Firebase project at: https://console.firebase.google.com/
-// 2. Add a web app to your project
-// 3. Copy the configuration values from Firebase console
-// 4. Replace the placeholder values above with your actual configuration
-// 5. Uncomment the following line when ready to use
+// Initialize Firebase
+let firebaseInitialized = false;
+let firebaseDb = null;
 
-window.firebaseConfig = firebaseConfig; 
+// Initialize Firebase if the SDK is available
+function initializeFirebase() {
+  if (typeof firebase !== 'undefined' && !firebaseInitialized) {
+    firebase.initializeApp(firebaseConfig);
+    firebaseDb = firebase.database();
+    firebaseInitialized = true;
+    console.log('Firebase initialized successfully');
+    return true;
+  } else if (firebaseInitialized) {
+    return true;
+  } else {
+    console.warn('Firebase SDK not available');
+    return false;
+  }
+}
+
+// Uncomment this line to activate Firebase integration
+// window.addEventListener('DOMContentLoaded', initializeFirebase); 
