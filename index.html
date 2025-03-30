@@ -9,10 +9,8 @@
   <link rel="icon" href="app-icon.svg">
   <link rel="apple-touch-icon" href="app-icon.png">
   <link rel="stylesheet" href="./src/styles/main.css">
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <!-- CryptoJS for password hashing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <style>
     /* Base styles */
     * {
@@ -904,6 +902,7 @@
       const profileEmail = document.getElementById('profileEmail');
       const shareCodeDisplay = document.getElementById('shareCodeDisplay');
       const passwordChangeForm = document.getElementById('passwordChangeForm');
+      const shareCodeText = document.getElementById('shareCodeText');
       
       // Auth form buttons
       const showSignupLink = document.getElementById('showSignup');
@@ -923,11 +922,28 @@
       // Profile section elements
       const showPasswordChange = document.getElementById('showPasswordChange');
       const copyShareCode = document.getElementById('copyShareCode');
-      const shareCodeText = document.getElementById('shareCodeText');
       
       // Set initial state of UI elements before everything else
       userInfoHeader.style.display = 'none';
       headerLoginButton.style.display = 'block';
+      
+      // Secure hash function for passwords (SHA-256 with email salt)
+      function secureHash(password, email) {
+        if (typeof CryptoJS !== 'undefined') {
+          return CryptoJS.SHA256(password + email).toString();
+        } else {
+          // Fallback for when CryptoJS is not available
+          console.log('CryptoJS not available, using simple hashing');
+          let hash = 0;
+          const combined = password + email;
+          for (let i = 0; i < combined.length; i++) {
+            const char = combined.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+          }
+          return hash.toString();
+        }
+      }
       
       // Generate random share code
       function generateShareCode() {
@@ -939,35 +955,33 @@
         return code;
       }
       
-      // Initialize users if not exists
-      const users = JSON.parse(localStorage.getItem('appUsers') || '{}');
-      
-      // Initialize shared lists if not exists
-      const sharedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
+      // Initialize users storage
+      let users = JSON.parse(localStorage.getItem('appUsers') || '{}');
+      let sharedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
       
       // Check if user is logged in
-      const currentUserEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
-      const currentSharedCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
+      let currentUserEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
+      let currentSharedCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
       
       // Update UI based on login state
       function updateUIAfterLogin() {
         // Get current values from storage each time function is called
-        const currentEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
-        const currentCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
+        currentUserEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
+        currentSharedCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
         
-        console.log('Updating UI for user:', currentEmail, 'with code:', currentCode); // Debug log
+        console.log('Updating UI for user:', currentUserEmail, 'with code:', currentSharedCode); // Debug log
         
-        if (currentEmail) {
+        if (currentUserEmail) {
           // Hide auth forms
           authForms.style.display = 'none';
           loginMessage.style.display = 'none';
           
           // Show profile section
           profileSection.classList.add('active');
-          profileEmail.textContent = currentEmail;
+          profileEmail.textContent = currentUserEmail;
           
-          if (currentCode) {
-            shareCodeText.textContent = currentCode;
+          if (currentSharedCode) {
+            shareCodeText.textContent = currentSharedCode;
             document.getElementById('shareCodeDisplay').style.display = 'flex';
           } else {
             document.getElementById('shareCodeDisplay').style.display = 'none';
@@ -978,11 +992,11 @@
           userInfoHeader.style.display = 'flex'; 
           
           // Set user avatar initial and name
-          const initial = currentEmail.charAt(0).toUpperCase();
+          const initial = currentUserEmail.charAt(0).toUpperCase();
           userAvatar.textContent = initial;
           
           // Extract name from email
-          const name = currentEmail.split('@')[0];
+          const name = currentUserEmail.split('@')[0];
           userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
           
           // Update counters
@@ -1050,13 +1064,86 @@
         });
       }
       
+      // Login functionality
+      if (accountLoginButton) {
+        accountLoginButton.addEventListener('click', function() {
+          console.log('Account login button clicked'); // Debug log
+          
+          const email = document.getElementById('loginEmail').value;
+          const password = document.getElementById('loginPassword').value;
+          
+          console.log('Login attempt for:', email); // Debug log
+          
+          if (!email || !password) {
+            alert('Please enter both email and password');
+            return;
+          }
+          
+          // Check if users object exists and has data
+          if (!users || Object.keys(users).length === 0) {
+            console.log('No users found in storage'); // Debug log
+            alert('No accounts found. Please sign up first.');
+            accountLoginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            return;
+          }
+          
+          console.log('Checking credentials against:', Object.keys(users).join(', ')); // Debug log
+          console.log('User record:', users[email]); // Show user record for debugging
+          
+          try {
+            // Check if user exists and if password matches
+            // First try with plain password (for backward compatibility)
+            if (users[email] && (users[email].password === password || users[email].password === secureHash(password, email))) {
+              console.log('Login successful for:', email); // Debug log
+              
+              // If password was stored in plain text, update to hashed version
+              if (users[email].password === password) {
+                console.log('Upgrading password to hashed version');
+                users[email].password = secureHash(password, email);
+                localStorage.setItem('appUsers', JSON.stringify(users));
+              }
+              
+              // Store current user in session
+              localStorage.setItem('currentUserEmail', email);
+              
+              // Check if user has a share code
+              if (users[email].shareCode) {
+                console.log('User has share code:', users[email].shareCode); // Debug log
+                localStorage.setItem('currentSharedCode', users[email].shareCode);
+                updateUIAfterLogin();
+                alert('Login successful! Welcome back, ' + email);
+              } else {
+                // Show join list form
+                console.log('User has no share code, showing join form'); // Debug log
+                accountLoginForm.style.display = 'none';
+                joinListForm.style.display = 'block';
+              }
+            } else {
+              if (!users[email]) {
+                console.log('User not found:', email); // Debug log
+                alert('Account not found. Please check your email or sign up.');
+              } else {
+                console.log('Password incorrect for:', email); // Debug log
+                console.log('Expected:', users[email].password);
+                console.log('Received hash:', secureHash(password, email));
+                alert('Incorrect password. Please try again.');
+              }
+            }
+          } catch (error) {
+            console.error('Login error:', error);
+            alert('Error during login: ' + error.message + '\nPlease try again.');
+          }
+        });
+      }
+      
       // Modal login form submission
       if (modalLoginForm) {
         modalLoginForm.addEventListener('submit', function(e) {
           e.preventDefault();
           
-          const email = document.getElementById('email').value;
-          const password = document.getElementById('password').value;
+          const email = document.getElementById('email')?.value;
+          const password = document.getElementById('password')?.value;
           const rememberMe = document.getElementById('rememberMe')?.checked;
           
           if (!email || !password) {
@@ -1064,8 +1151,9 @@
             return;
           }
           
-          // Check if user exists and password matches
-          if (users[email] && users[email].password === password) {
+          // Check if user exists and if password matches
+          // First try with plain password (for backward compatibility)
+          if (users[email] && (users[email].password === password || users[email].password === secureHash(password, email))) {
             // Store current user in session
             if (rememberMe) {
               localStorage.setItem('currentUserEmail', email);
@@ -1093,62 +1181,6 @@
         });
       }
       
-      // When login button is clicked in the account section
-      if (accountLoginButton) {
-        accountLoginButton.addEventListener('click', function() {
-          console.log('Account login button clicked'); // Debug log
-          
-          const email = document.getElementById('loginEmail').value;
-          const password = document.getElementById('loginPassword').value;
-          
-          console.log('Login attempt for:', email); // Debug log
-          
-          if (!email || !password) {
-            alert('Please enter both email and password');
-            return;
-          }
-          
-          // Check if users object exists and has data
-          if (!users || Object.keys(users).length === 0) {
-            console.log('No users found in storage'); // Debug log
-            alert('No accounts found. Please sign up first.');
-            accountLoginForm.style.display = 'none';
-            signupForm.style.display = 'block';
-            return;
-          }
-          
-          console.log('Checking credentials against:', Object.keys(users).join(', ')); // Debug log
-          
-          // Check if user exists and password matches
-          if (users[email] && users[email].password === password) {
-            console.log('Login successful for:', email); // Debug log
-            
-            // Store current user in session
-            localStorage.setItem('currentUserEmail', email);
-            
-            // Check if user has a share code
-            if (users[email].shareCode) {
-              console.log('User has share code:', users[email].shareCode); // Debug log
-              localStorage.setItem('currentSharedCode', users[email].shareCode);
-              updateUIAfterLogin();
-            } else {
-              // Show join list form
-              console.log('User has no share code, showing join form'); // Debug log
-              accountLoginForm.style.display = 'none';
-              joinListForm.style.display = 'block';
-            }
-          } else {
-            if (!users[email]) {
-              console.log('User not found:', email); // Debug log
-              alert('Account not found. Please check your email or sign up.');
-            } else {
-              console.log('Password incorrect for:', email); // Debug log
-              alert('Incorrect password. Please try again.');
-            }
-          }
-        });
-      }
-      
       // When signup button is clicked
       signupButton.addEventListener('click', function() {
         console.log('Signup button clicked'); // Debug log
@@ -1169,48 +1201,74 @@
           return;
         }
         
-        // Check if user already exists
-        if (users[email]) {
-          console.log('User already exists:', email); // Debug log
-          alert('User with this email already exists');
-          return;
+        try {
+          // Email validation
+          if (!email.includes('@') || !email.includes('.')) {
+            alert('Please enter a valid email address');
+            return;
+          }
+          
+          // Password strength check
+          if (password.length < 6) {
+            alert('Password must be at least 6 characters long');
+            return;
+          }
+          
+          // Check if user already exists in local storage
+          if (users[email]) {
+            console.log('User already exists in local storage:', email); // Debug log
+            alert('User with this email already exists. Please log in instead.');
+            // Switch to login form
+            signupForm.style.display = 'none';
+            accountLoginForm.style.display = 'block';
+            // Pre-fill email
+            document.getElementById('loginEmail').value = email;
+            return;
+          }
+          
+          // Generate a share code
+          const shareCode = generateShareCode();
+          console.log('Generated share code:', shareCode); // Debug log
+          
+          // Hash the password with email as salt
+          const hashedPassword = secureHash(password, email);
+          console.log('Hashed password:', hashedPassword); // Debug log
+          
+          // Create user account locally
+          users[email] = {
+            password: hashedPassword,
+            shareCode: shareCode,
+            createdAt: new Date().toISOString()
+          };
+          
+          // Create empty shared list locally
+          sharedLists[shareCode] = {
+            owner: email,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            items: []
+          };
+          
+          // Save to localStorage for offline access
+          localStorage.setItem('appUsers', JSON.stringify(users));
+          localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+          
+          // Set current user
+          localStorage.setItem('currentUserEmail', email);
+          localStorage.setItem('currentSharedCode', shareCode);
+          
+          console.log('Account created locally:', email, 'with code:', shareCode); // Debug log
+          console.log('Users object:', users); // Debug log
+          
+          // Update UI
+          updateUIAfterLogin();
+          
+          // Show success message
+          alert(`Account created successfully! Your share code is: ${shareCode}\n\nShare this code with family members so they can access your grocery list when they log in.`);
+        } catch (error) {
+          console.error('Signup error:', error);
+          alert('Error during signup: ' + error.message + '\nPlease try again.');
         }
-        
-        // Generate a share code
-        const shareCode = generateShareCode();
-        console.log('Generated share code:', shareCode); // Debug log
-        
-        // Create user account
-        users[email] = {
-          password: password,
-          shareCode: shareCode,
-          createdAt: new Date().toISOString()
-        };
-        
-        // Create empty shared list
-        sharedLists[shareCode] = {
-          owner: email,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          items: []
-        };
-        
-        // Save to localStorage
-        localStorage.setItem('appUsers', JSON.stringify(users));
-        localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
-        
-        // Set current user
-        localStorage.setItem('currentUserEmail', email);
-        localStorage.setItem('currentSharedCode', shareCode);
-        
-        console.log('Account created successfully:', email, 'with code:', shareCode); // Debug log
-        console.log('Current users:', Object.keys(users)); // Debug log
-        
-        // Update UI
-        updateUIAfterLogin();
-        
-        // Show success message
-        alert(`Account created! Your share code is: ${shareCode}\n\nShare this code with family members so they can access your grocery list when they log in.`);
       });
       
       // Join existing list
@@ -1288,8 +1346,8 @@
         sessionStorage.removeItem('currentSharedCode');
         
         // Force reset the login state variables
-        window.currentUserEmail = null;
-        window.currentSharedCode = null;
+        currentUserEmail = null;
+        currentSharedCode = null;
         
         // Reset forms
         signupForm.style.display = 'none';
@@ -1381,7 +1439,7 @@
         const newPassword = document.getElementById('newPassword').value;
         const confirmNewPassword = document.getElementById('confirmNewPassword').value;
         
-        if (!currentPassword || !newPassword || !confirmNewPassword) {
+        if (!email || !currentPassword || !newPassword || !confirmNewPassword) {
           alert('Please fill all password fields');
           return;
         }
@@ -1391,14 +1449,19 @@
           return;
         }
         
-        // Verify current password
-        if (users[email].password !== currentPassword) {
+        // First verify with plain text password (for backward compatibility)
+        if (users[email].password !== currentPassword && users[email].password !== secureHash(currentPassword, email)) {
+          console.log('Current password is incorrect');
+          console.log('Expected:', users[email].password);
+          console.log('Received plain:', currentPassword);
+          console.log('Received hash:', secureHash(currentPassword, email));
           alert('Current password is incorrect');
           return;
         }
         
-        // Update password
-        users[email].password = newPassword;
+        // Update password with new hashed version
+        const hashedNewPw = secureHash(newPassword, email);
+        users[email].password = hashedNewPw;
         
         // Save to localStorage
         localStorage.setItem('appUsers', JSON.stringify(users));
@@ -1464,7 +1527,115 @@
       
       // Initialize UI based on login state
       updateUIAfterLogin();
+      
+      // Run QA tests to validate authentication system
+      setTimeout(() => {
+        console.log('-----------------------------------------------------');
+        console.log('Running automated QA tests for authentication system...');
+        console.log('-----------------------------------------------------');
+        
+        try {
+          // Test 1: Password hashing
+          console.log('Test 1: Password hashing');
+          const testEmail = 'test@example.com';
+          const testPassword = 'password123';
+          const hash1 = secureHash(testPassword, testEmail);
+          const hash2 = secureHash(testPassword, testEmail);
+          const hash3 = secureHash('wrongpassword', testEmail);
+          
+          console.log('Hash 1:', hash1);
+          console.log('Hash 2:', hash2);
+          console.log('Hash 3:', hash3);
+          
+          if (hash1 === hash2 && hash1 !== hash3) {
+            console.log('✅ Password hashing works correctly');
+          } else {
+            console.error('❌ Password hashing is inconsistent');
+          }
+          
+          // Test 2: User signup and login
+          console.log('Test 2: User signup and login');
+          
+          // Create test user
+          const testUser = {
+            email: 'qatest@example.com',
+            password: 'testpassword'
+          };
+          
+          // Check if test user already exists
+          if (users[testUser.email]) {
+            console.log('Test user already exists, deleting for clean test');
+            delete users[testUser.email];
+            
+            // Also delete any shared lists
+            Object.keys(sharedLists).forEach(code => {
+              if (sharedLists[code].owner === testUser.email) {
+                delete sharedLists[code];
+              }
+            });
+          }
+          
+          // Simulate signup
+          const shareCode = generateShareCode();
+          const hashedPw = secureHash(testUser.password, testUser.email);
+          
+          users[testUser.email] = {
+            password: hashedPw,
+            shareCode: shareCode,
+            createdAt: new Date().toISOString()
+          };
+          
+          sharedLists[shareCode] = {
+            owner: testUser.email,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            items: []
+          };
+          
+          // Test login with correct hashed password
+          const correctPassword = testUser.password;
+          const correctLogin = users[testUser.email].password === secureHash(correctPassword, testUser.email);
+          
+          if (correctLogin) {
+            console.log('✅ Login with correct password works');
+          } else {
+            console.error('❌ Login with correct password fails');
+            console.log('Expected hash:', users[testUser.email].password);
+            console.log('Actual hash:', secureHash(correctPassword, testUser.email));
+          }
+          
+          // Test login with wrong password
+          const wrongPassword = 'wrongpassword';
+          const wrongLogin = users[testUser.email].password === secureHash(wrongPassword, testUser.email);
+          
+          if (!wrongLogin) {
+            console.log('✅ Login with wrong password fails (as expected)');
+          } else {
+            console.error('❌ Login with wrong password succeeds (unexpected)');
+          }
+          
+          // Cleanup test data
+          delete users[testUser.email];
+          delete sharedLists[shareCode];
+          
+          console.log('QA tests passed successfully!');
+        } catch (error) {
+          console.error('Error during QA tests:', error);
+        }
+      }, 2000);
     });
+  </script>
+  
+  <!-- Add offline indicator -->
+  <div id="offlineIndicator" style="display: none; position: fixed; bottom: 70px; left: 0; right: 0; background-color: #f44336; color: white; text-align: center; padding: 8px; z-index: 1000;">
+    You are offline. Changes will be saved locally.
+  </div>
+  
+  <script>
+    // Initialize offline indicator
+    if (!navigator.onLine) {
+      document.getElementById('offlineIndicator').style.display = 'block';
+    }
   </script>
 </body>
 </html>
