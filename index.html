@@ -398,6 +398,7 @@
       border-radius: 24px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       transition: all 0.2s;
+      cursor: pointer;
     }
     
     .user-info:hover {
@@ -501,11 +502,11 @@
     
     .profile-section {
       display: none;
-      padding: 1rem;
-      background: #f9f9f9;
-      border-radius: 10px;
+      padding: 1.5rem;
+      background: white;
+      border-radius: 16px;
       margin: 1rem 0;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     
     .profile-section.active {
@@ -515,43 +516,102 @@
     .profile-section h3 {
       margin-top: 0;
       color: #333;
+      font-size: 1.2rem;
+      margin-bottom: 1.2rem;
     }
     
     .change-password-form {
       display: flex;
       flex-direction: column;
-      gap: 0.8rem;
+      gap: 1rem;
+      margin-top: 1rem;
     }
     
     .change-password-form input {
-      padding: 0.8rem;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      padding: 1rem;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      font-size: 1rem;
+      background-color: #f9f9fa;
     }
     
     .profile-buttons {
       display: flex;
-      gap: 0.8rem;
-      margin-top: 1rem;
+      gap: 1rem;
+      margin-top: 1.5rem;
     }
     
     .user-info {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid #eee;
+      margin-bottom: 1.2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #f0f0f0;
     }
     
     .user-email {
-      font-weight: bold;
+      font-weight: 600;
       color: #333;
+      font-size: 1.1rem;
     }
     
     .user-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.8rem;
+    }
+    
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+    
+    .share-code-display {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      border: 1px dashed #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .share-code {
+      font-weight: 600;
+      color: #4CAF50;
+      font-family: monospace;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+    }
+    
+    .share-text {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .profile-option {
+      padding: 1rem;
+      border-radius: 12px;
+      background: #f8f9fa;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.2s;
+    }
+    
+    .profile-option:hover {
+      background: #f0f0f0;
+    }
+    
+    .profile-option-text {
+      font-weight: 500;
+    }
+    
+    .profile-option-icon {
+      color: #999;
     }
     
     /* Add highlight animation for account section */
@@ -638,9 +698,9 @@
       <h1 class="header-title">Grocery & Meal Planner 01</h1>
     </div>
     <div class="user-menu">
-      <div class="user-info" id="userInfo">
-        <div class="user-avatar" id="userAvatar">J</div>
-        <span id="userName">Jelle</span>
+      <div class="user-info" id="userInfo" style="display: none;">
+        <div class="user-avatar" id="userAvatar"></div>
+        <span id="userName"></span>
       </div>
       <button class="btn" id="headerLoginButton">Log In</button>
     </div>
@@ -770,12 +830,22 @@
         <div class="user-info">
           <div class="user-email" id="profileEmail"></div>
           <div class="user-actions">
-            <button id="profileButton" class="btn btn-small">Profile</button>
-            <button id="logoutButton" class="btn btn-small btn-secondary">Log Out</button>
+            <button id="logoutButton" class="btn btn-small btn-secondary">Sign Out</button>
           </div>
         </div>
         
-        <div id="shareCodeDisplay" style="margin-bottom: 1rem;"></div>
+        <div id="shareCodeDisplay" class="share-code-display">
+          <div>
+            <div class="share-code" id="shareCodeText"></div>
+            <div class="share-text">Share this code with family members</div>
+          </div>
+          <button id="copyShareCode" class="btn btn-small">Copy</button>
+        </div>
+        
+        <div class="profile-option" id="showPasswordChange">
+          <div class="profile-option-text">Change Password</div>
+          <div class="profile-option-icon">›</div>
+        </div>
         
         <!-- Change Password Form -->
         <div id="passwordChangeForm" style="display: none;">
@@ -844,12 +914,20 @@
       const createNewListButton = document.getElementById('createNewListButton');
       
       // Profile buttons
-      const profileButton = document.getElementById('profileButton');
       const logoutButton = document.getElementById('logoutButton');
       const cancelPasswordChange = document.getElementById('cancelPasswordChange');
       const saveNewPassword = document.getElementById('saveNewPassword');
       const switchToSignup = document.getElementById('switchToSignup');
       const authSubmit = document.getElementById('authSubmit');
+      
+      // Profile section elements
+      const showPasswordChange = document.getElementById('showPasswordChange');
+      const copyShareCode = document.getElementById('copyShareCode');
+      const shareCodeText = document.getElementById('shareCodeText');
+      
+      // Set initial state of UI elements before everything else
+      userInfoHeader.style.display = 'none';
+      headerLoginButton.style.display = 'block';
       
       // Generate random share code
       function generateShareCode() {
@@ -873,29 +951,38 @@
       
       // Update UI based on login state
       function updateUIAfterLogin() {
-        if (currentUserEmail) {
+        // Get current values from storage each time function is called
+        const currentEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
+        const currentCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
+        
+        console.log('Updating UI for user:', currentEmail, 'with code:', currentCode); // Debug log
+        
+        if (currentEmail) {
           // Hide auth forms
           authForms.style.display = 'none';
           loginMessage.style.display = 'none';
           
           // Show profile section
           profileSection.classList.add('active');
-          profileEmail.textContent = currentUserEmail;
+          profileEmail.textContent = currentEmail;
           
-          if (currentSharedCode) {
-            shareCodeDisplay.innerHTML = `<div>Your share code: <strong>${currentSharedCode}</strong> (Share this with family members)</div>`;
+          if (currentCode) {
+            shareCodeText.textContent = currentCode;
+            document.getElementById('shareCodeDisplay').style.display = 'flex';
+          } else {
+            document.getElementById('shareCodeDisplay').style.display = 'none';
           }
           
-          // Update header UI
+          // Update header UI 
           headerLoginButton.style.display = 'none';
-          userInfoHeader.classList.add('logged-in');
+          userInfoHeader.style.display = 'flex'; 
           
           // Set user avatar initial and name
-          const initial = currentUserEmail.charAt(0).toUpperCase();
+          const initial = currentEmail.charAt(0).toUpperCase();
           userAvatar.textContent = initial;
           
           // Extract name from email
-          const name = currentUserEmail.split('@')[0];
+          const name = currentEmail.split('@')[0];
           userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
           
           // Update counters
@@ -910,7 +997,7 @@
           
           // Update header UI
           headerLoginButton.style.display = 'block';
-          userInfoHeader.classList.remove('logged-in');
+          userInfoHeader.style.display = 'none';
         }
       }
       
@@ -1009,39 +1096,68 @@
       // When login button is clicked in the account section
       if (accountLoginButton) {
         accountLoginButton.addEventListener('click', function() {
+          console.log('Account login button clicked'); // Debug log
+          
           const email = document.getElementById('loginEmail').value;
           const password = document.getElementById('loginPassword').value;
+          
+          console.log('Login attempt for:', email); // Debug log
           
           if (!email || !password) {
             alert('Please enter both email and password');
             return;
           }
           
+          // Check if users object exists and has data
+          if (!users || Object.keys(users).length === 0) {
+            console.log('No users found in storage'); // Debug log
+            alert('No accounts found. Please sign up first.');
+            accountLoginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            return;
+          }
+          
+          console.log('Checking credentials against:', Object.keys(users).join(', ')); // Debug log
+          
           // Check if user exists and password matches
           if (users[email] && users[email].password === password) {
+            console.log('Login successful for:', email); // Debug log
+            
             // Store current user in session
             localStorage.setItem('currentUserEmail', email);
             
             // Check if user has a share code
             if (users[email].shareCode) {
+              console.log('User has share code:', users[email].shareCode); // Debug log
               localStorage.setItem('currentSharedCode', users[email].shareCode);
               updateUIAfterLogin();
             } else {
               // Show join list form
+              console.log('User has no share code, showing join form'); // Debug log
               accountLoginForm.style.display = 'none';
               joinListForm.style.display = 'block';
             }
           } else {
-            alert('Invalid email or password');
+            if (!users[email]) {
+              console.log('User not found:', email); // Debug log
+              alert('Account not found. Please check your email or sign up.');
+            } else {
+              console.log('Password incorrect for:', email); // Debug log
+              alert('Incorrect password. Please try again.');
+            }
           }
         });
       }
       
       // When signup button is clicked
       signupButton.addEventListener('click', function() {
+        console.log('Signup button clicked'); // Debug log
+        
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        console.log('Signup attempt for:', email); // Debug log
         
         if (!email || !password || !confirmPassword) {
           alert('Please fill all fields');
@@ -1055,12 +1171,14 @@
         
         // Check if user already exists
         if (users[email]) {
+          console.log('User already exists:', email); // Debug log
           alert('User with this email already exists');
           return;
         }
         
         // Generate a share code
         const shareCode = generateShareCode();
+        console.log('Generated share code:', shareCode); // Debug log
         
         // Create user account
         users[email] = {
@@ -1084,6 +1202,9 @@
         // Set current user
         localStorage.setItem('currentUserEmail', email);
         localStorage.setItem('currentSharedCode', shareCode);
+        
+        console.log('Account created successfully:', email, 'with code:', shareCode); // Debug log
+        console.log('Current users:', Object.keys(users)); // Debug log
         
         // Update UI
         updateUIAfterLogin();
@@ -1150,36 +1271,97 @@
         alert(`New list created! Your share code is: ${shareCode}`);
       });
       
-      // Log out
+      // Log out - completely rewritten
       logoutButton.addEventListener('click', function() {
         console.log('Logout button clicked'); // Debug log
         
-        // Clear session data
+        // First check if we're actually logged in
+        if (!currentUserEmail) {
+          console.log('Not logged in, nothing to do');
+          return;
+        }
+        
+        // Clear ALL session data to ensure complete logout
         localStorage.removeItem('currentUserEmail');
         localStorage.removeItem('currentSharedCode');
         sessionStorage.removeItem('currentUserEmail');
         sessionStorage.removeItem('currentSharedCode');
         
-        // Update UI
-        updateUIAfterLogin();
+        // Force reset the login state variables
+        window.currentUserEmail = null;
+        window.currentSharedCode = null;
         
-        // Show login form
+        // Reset forms
         signupForm.style.display = 'none';
         joinListForm.style.display = 'none';
         accountLoginForm.style.display = 'block';
         
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Force reset the UI elements directly
+        userInfoHeader.style.display = 'none';
+        headerLoginButton.style.display = 'block';
+        profileSection.classList.remove('active');
+        authForms.style.display = 'block';
+        loginMessage.style.display = 'block';
         
-        alert('You have been logged out successfully');
+        // Clear any password change form data
+        if (document.getElementById('currentPassword')) {
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmNewPassword').value = '';
+        }
+        
+        // Hide password change form
+        passwordChangeForm.style.display = 'none';
+        
+        // Scroll to top with delay to ensure UI updates first
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          alert('You have been signed out successfully');
+          
+          // Force page reload to ensure clean state
+          window.location.reload();
+        }, 100);
       });
       
       // Toggle password change form
-      profileButton.addEventListener('click', function() {
-        if (passwordChangeForm.style.display === 'none') {
-          passwordChangeForm.style.display = 'block';
+      showPasswordChange.addEventListener('click', function() {
+        passwordChangeForm.style.display = passwordChangeForm.style.display === 'none' ? 'block' : 'none';
+      });
+      
+      // Copy share code to clipboard
+      copyShareCode.addEventListener('click', function() {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(currentSharedCode)
+            .then(() => {
+              copyShareCode.textContent = "Copied!";
+              setTimeout(() => {
+                copyShareCode.textContent = "Copy";
+              }, 2000);
+            })
+            .catch(err => {
+              console.error('Could not copy text: ', err);
+              alert('Failed to copy. Please copy the code manually.');
+            });
         } else {
-          passwordChangeForm.style.display = 'none';
+          // Fallback for browsers without clipboard API
+          const textArea = document.createElement("textarea");
+          textArea.value = currentSharedCode;
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          
+          try {
+            document.execCommand('copy');
+            copyShareCode.textContent = "Copied!";
+            setTimeout(() => {
+              copyShareCode.textContent = "Copy";
+            }, 2000);
+          } catch (err) {
+            console.error('Could not copy text: ', err);
+            alert('Failed to copy. Please copy the code manually.');
+          }
+          
+          document.body.removeChild(textArea);
         }
       });
       
@@ -1286,4 +1468,5 @@
   </script>
 </body>
 </html>
+
 
