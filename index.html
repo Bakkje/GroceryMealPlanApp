@@ -19,7 +19,7 @@
   <link rel="preload" href="./src/styles/main.css" as="style">
   <link rel="stylesheet" href="./src/styles/main.css">
   
-  <!-- CryptoJS for password hashing - with async loading -->
+  <!-- CryptoJS for hash generation - with async loading -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" async></script>
   
   <!-- Firebase Configuration -->
@@ -27,7 +27,6 @@
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
   
   <!-- Cloud Sync Module -->
@@ -65,8 +64,8 @@
     /* Page specific styles */
     .page{padding-bottom:80px} /* Space for fixed navigation */
     
-    /* User menu and login */
-    .user-menu{position:absolute;top:15px;right:15px;z-index:10}
+    /* Share menu */
+    .share-menu{position:absolute;top:15px;right:15px;z-index:10}
     
     /* Quick actions cards */
     .quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:1.2rem 0}
@@ -87,55 +86,81 @@
     .btn-danger{background-color:#f44336;color:white}
     .btn-danger:hover{background-color:#d32f2f}
     
-    /* Login modal styles */
-    .login-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;animation:fadeIn .3s ease}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    .login-modal.active{display:flex}
-    .login-container{background-color:white;padding:2rem;border-radius:20px;width:90%;max-width:360px;box-shadow:0 8px 30px rgba(0,0,0,0.25);animation:slideUp .4s ease}
-    @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-    .login-container h2{margin-top:0;margin-bottom:1.5rem;text-align:center;color:#4CAF50;font-weight:600}
-    
     /* Form styles with improved accessibility */
     .form-group{margin-bottom:1.4rem}
     .form-group label{display:block;margin-bottom:.6rem;font-weight:500;color:#444}
     .form-group input{width:100%;padding:.9rem;border:1px solid #ddd;border-radius:12px;font-size:1.05rem;transition:all .2s}
     .form-group input:focus{outline:none;border-color:#4CAF50;box-shadow:0 0 0 3px rgba(76,175,80,0.2)}
-    .login-buttons{display:flex;justify-content:space-between;margin-top:1.8rem}
-    .remember-me{display:flex;align-items:center;margin-top:1rem}
-    .remember-me input{margin-right:.6rem;width:18px;height:18px;position:relative;appearance:none;border:2px solid #4CAF50;border-radius:4px;background-color:white;cursor:pointer}
-    .remember-me input:checked{background-color:#4CAF50}
-    .remember-me input:checked::after{content:'✓';position:absolute;color:white;font-size:12px;top:50%;left:50%;transform:translate(-50%,-50%)}
-    .remember-me label{font-size:.95rem;color:#555}
     
-    /* Additional styles for improved UX */
-    .form-error{color:#f44336;font-size:.85rem;margin-top:.5rem}
-    .loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(76,175,80,0.3);border-radius:50%;border-top-color:#4CAF50;animation:spin 1s linear infinite;margin-right:10px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    
-    /* Import section styles */
-    .import-section {
-      margin-bottom: 25px;
+    /* Share section */
+    .share-section {
+      margin: 25px 0;
       background: #f9f9f9;
       padding: 15px;
-      border-radius: 5px;
+      border-radius: 10px;
       border: 1px solid #e0e0e0;
     }
     
-    .import-section h3 {
+    .share-section h3 {
       color: #4CAF50;
       margin-bottom: 10px;
     }
     
-    .import-section button {
-      margin-top: 10px;
-      width: 100%;
-      padding: 12px;
-      font-size: 1.1rem;
+    .share-code-display {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border: 1px dashed #ddd;
     }
     
-    /* Mobile Footer Spacing */
-    .account-container {
-      padding-bottom: 120px; /* Extra padding to ensure content doesn't get hidden by bottom nav */
+    .share-code {
+      font-size: 1.5rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #2E7D32;
+    }
+    
+    .share-text {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    /* Join section */
+    .join-section {
+      margin: 25px 0;
+      background: #f0f7f0;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #d0e8d0;
+    }
+    
+    .join-section h3 {
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+    
+    .join-form {
+      display: flex;
+      margin-top: 10px;
+    }
+    
+    .join-form input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px 0 0 8px;
+      font-size: 1rem;
+      text-transform: uppercase;
+    }
+    
+    .join-form button {
+      border-radius: 0 8px 8px 0;
+      padding: 10px 15px;
     }
     
     /* App sections */
@@ -148,14 +173,16 @@
       margin-bottom: 100px; /* Extra margin at the bottom for mobile navigation */
     }
     
+    /* Additional styles for improved UX */
+    .form-error{color:#f44336;font-size:.85rem;margin-top:.5rem}
+    .loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(76,175,80,0.3);border-radius:50%;border-top-color:#4CAF50;animation:spin 1s linear infinite;margin-right:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    
     /* Media Queries for Improved Responsiveness */
     @media (min-width:768px){
       .quick-actions{grid-template-columns:repeat(4,1fr)}
       .container{max-width:720px}
       /* Reduce footer spacing on larger screens */
-      .account-container {
-        padding-bottom: 60px;
-      }
       .app-section:last-child {
         margin-bottom: 60px;
       }
@@ -172,34 +199,6 @@
   <!-- Accessibility: Skip to main content link -->
   <a href="#main-content" class="sr-only sr-only-focusable">Skip to main content</a>
 
-  <!-- Login Modal -->
-  <div class="login-modal" id="loginModal" role="dialog" aria-labelledby="authTitle" aria-hidden="true">
-    <div class="login-container">
-      <h2 id="authTitle">Log In</h2>
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" required aria-required="true">
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" required aria-required="true">
-        </div>
-        <div class="remember-me">
-          <input type="checkbox" id="rememberMe" checked>
-          <label for="rememberMe">Remember me</label>
-        </div>
-        <div class="login-buttons">
-          <button type="button" class="btn btn-secondary" id="cancelLogin">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="authSubmit">Log In</button>
-        </div>
-        <div class="auth-switch">
-          <p>Don't have an account? <a href="#" id="switchToSignup">Sign up</a></p>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Header -->
   <header class="header">
     <div class="header-overlay"></div>
@@ -207,12 +206,8 @@
     <div class="header-content">
       <h1 class="header-title">Grocery & Meal Planner</h1>
     </div>
-    <div class="user-menu">
-      <div class="user-info" id="userInfo" style="display: none;">
-        <div class="user-avatar" id="userAvatar" aria-label="User profile"></div>
-        <span id="userName"></span>
-      </div>
-      <button class="btn" id="headerLoginButton" aria-label="Log in">Log In</button>
+    <div class="share-menu">
+      <button class="btn" id="showShareModal" aria-label="Share List">Share</button>
     </div>
   </header>
 
@@ -280,6 +275,40 @@
           </a>
         </div>
       </div>
+      
+      <!-- Share & Sync Section -->
+      <section class="app-section" id="shareSection" aria-labelledby="shareTitle">
+        <div class="section-content">
+          <h2 id="shareTitle">Share & Sync</h2>
+          
+          <!-- Your Share Code -->
+          <div class="share-section">
+            <h3>Your Share Code</h3>
+            <p>Share this code with others to let them access your grocery list</p>
+            
+            <div class="share-code-display">
+              <div>
+                <div class="share-code" id="shareCodeText"></div>
+                <div class="share-text">Share this code with family members</div>
+              </div>
+              <button id="copyShareCode" class="btn btn-small" aria-label="Copy share code">Copy</button>
+            </div>
+            
+            <button id="generateNewCode" class="btn btn-secondary">Generate New Code</button>
+          </div>
+          
+          <!-- Join Someone's List -->
+          <div class="join-section">
+            <h3>Join Someone's List</h3>
+            <p>Enter the share code from a family member or friend</p>
+            
+            <div class="join-form">
+              <input type="text" id="joinCodeInput" placeholder="Enter code" maxlength="6" style="text-transform: uppercase;">
+              <button id="joinCodeButton" class="btn btn-primary">Join</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -303,137 +332,7 @@
     </a>
   </nav>
 
-  <!-- Account section -->
-  <section class="app-section" id="accountSection" aria-labelledby="accountTitle">
-    <div class="section-content">
-      <h2 id="accountTitle">Account</h2>
-      <div id="loginMessage">Please log in or sign up to access your personalized grocery lists and meal plans.</div>
-      
-      <!-- Login/Signup forms -->
-      <div id="authForms">
-        <!-- Login Form -->
-        <div class="auth-form" id="accountLoginForm">
-          <h3>Log In</h3>
-          <input type="email" id="loginEmail" placeholder="Email" required aria-required="true" autocomplete="email">
-          <input type="password" id="loginPassword" placeholder="Password" required aria-required="true" autocomplete="current-password">
-          <button id="accountLoginButton" class="btn btn-primary">Log In</button>
-          <p class="auth-switch">Don't have an account? <a href="#" id="showSignup">Sign Up</a></p>
-          <div style="margin-top: 20px; text-align: center; border-top: 1px solid #eee; padding-top: 15px;">
-            <button id="clearAllDataButton" class="btn btn-danger" style="font-size: 0.8rem; padding: 6px 10px;">Clear All Data</button>
-          </div>
-        </div>
-        
-        <!-- Signup Form -->
-        <div class="auth-form" id="signupForm" style="display: none;">
-          <h3>Create Account</h3>
-          <input type="email" id="signupEmail" placeholder="Email" required aria-required="true" autocomplete="email">
-          <input type="password" id="signupPassword" placeholder="Password" required aria-required="true" autocomplete="new-password"
-            aria-describedby="password-hint">
-          <p id="password-hint" class="form-hint">Password must be at least 6 characters</p>
-          <input type="password" id="confirmPassword" placeholder="Confirm Password" required aria-required="true" autocomplete="new-password">
-          <button id="signupButton" class="btn btn-primary">Sign Up</button>
-          <p class="auth-switch">Already have an account? <a href="#" id="showLogin">Log In</a></p>
-        </div>
-        
-        <!-- Join Shared List -->
-        <div class="auth-form" id="joinListForm" style="display: none;">
-          <h3>Join Shared List</h3>
-          <p>Enter the share code provided by your family member:</p>
-          <input type="text" id="shareCodeInput" placeholder="Share Code (e.g. AB12CD)" required aria-required="true" 
-            maxlength="6" style="text-transform: uppercase;">
-          <button id="joinListButton" class="btn btn-primary">Join List</button>
-          <button id="createNewListButton" class="btn btn-secondary">Create New List</button>
-        </div>
-      </div>
-      
-      <!-- Profile Section (shown when logged in) -->
-      <div class="profile-section" id="profileSection">
-        <div class="user-info">
-          <div class="user-email" id="profileEmail"></div>
-          <div class="user-actions">
-            <button id="logoutButton" class="btn btn-small btn-secondary">Sign Out</button>
-          </div>
-        </div>
-        
-        <div id="shareCodeDisplay" class="share-code-display">
-          <div>
-            <div class="share-code" id="shareCodeText"></div>
-            <div class="share-text">Share this code with family members</div>
-          </div>
-          <button id="copyShareCode" class="btn btn-small" aria-label="Copy share code">Copy</button>
-        </div>
-        
-        <div class="profile-option" id="showPasswordChange" tabindex="0" role="button">
-          <div class="profile-option-text">Change Password</div>
-          <div class="profile-option-icon" aria-hidden="true">›</div>
-        </div>
-        
-        <!-- Change Password Form -->
-        <div id="passwordChangeForm" style="display: none;">
-          <h3>Change Password</h3>
-          <div class="change-password-form">
-            <input type="password" id="currentPassword" placeholder="Current Password" required aria-required="true" autocomplete="current-password">
-            <input type="password" id="newPassword" placeholder="New Password" required aria-required="true" autocomplete="new-password">
-            <input type="password" id="confirmNewPassword" placeholder="Confirm New Password" required aria-required="true" autocomplete="new-password">
-          </div>
-          <div class="profile-buttons">
-            <button id="cancelPasswordChange" class="btn btn-secondary">Cancel</button>
-            <button id="saveNewPassword" class="btn btn-primary">Save New Password</button>
-          </div>
-        </div>
-        
-        <!-- Export account data section -->
-        <div class="export-section" style="margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
-          <h3>Use on another device</h3>
-          <p>Export your account data to use on your phone or another device:</p>
-          <button id="exportAccountButton" class="btn primary-btn">Export Account Data</button>
-          <div id="exportResult" style="display: none; margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
-            <p>Copy this code to import on another device:</p>
-            <textarea id="exportCodeArea" rows="4" style="width: 100%; margin: 10px 0; border-radius: 5px; padding: 10px;" readonly></textarea>
-            <button id="copyExportCode" class="btn secondary-btn">Copy Code</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Updated Mobile-Friendly Account Container -->
-  <div class="account-container">
-    <h2>Quick Access</h2>
-    
-    <!-- Account info when logged in -->
-    <div id="accountInfoMobile" style="display: none;">
-      <p>Logged in as: <span id="currentUserDisplayMobile"></span></p>
-      <div class="share-code-container">
-        <p>Your Share Code:</p>
-        <div class="share-code-box">
-          <span id="shareCodeDisplayMobile"></span>
-          <button id="copyShareCodeMobile" class="btn secondary-btn">Copy</button>
-        </div>
-      </div>
-      <button id="logoutButtonMobile" class="btn danger-btn">Logout</button>
-    </div>
-    
-    <!-- Account forms when not logged in -->
-    <div id="accountFormsMobile">
-      <!-- Login form -->
-      <div id="accountLoginFormMobile">
-        <h3>Quick Access</h3>
-        
-        <!-- Import account data section - Moved to top for mobile accessibility -->
-        <div class="import-section">
-          <h3>Import Account from Another Device</h3>
-          <p>Have an account on another device? Import it here:</p>
-          <div class="form-group">
-            <textarea id="importCodeArea" rows="4" style="width: 100%; border-radius: 5px; padding: 10px;" placeholder="Paste your export code here..."></textarea>
-          </div>
-          <button id="importAccountButton" class="btn secondary-btn">Import Account</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add offline indicator - Increased bottom margin to ensure visibility above navigation bar -->
+  <!-- Add offline indicator -->
   <div id="offlineIndicator" style="display: none; position: fixed; bottom: 90px; left: 0; right: 0; background-color: #f44336; color: white; text-align: center; padding: 8px; z-index: 1000;">
     You are offline. Changes will be saved locally.
   </div>
@@ -472,50 +371,12 @@
   <script defer>
     document.addEventListener('DOMContentLoaded', function() {
       // UI elements
-      const homeSection = document.getElementById('homeSection');
       const groceryCounter = document.getElementById('groceryCounter');
-      const mealPlanCounter = document.getElementById('mealPlanCounter');
-      const recipesCounter = document.getElementById('recipesCounter');
-      
-      // Login elements
-      const loginModal = document.getElementById('loginModal');
-      const headerLoginButton = document.getElementById('headerLoginButton');
-      const cancelLogin = document.getElementById('cancelLogin');
-      const modalLoginForm = document.getElementById('loginForm');
-      const userInfoHeader = document.getElementById('userInfo');
-      const userAvatar = document.getElementById('userAvatar');
-      const userName = document.getElementById('userName');
-      
-      // Account section elements
-      const accountLoginForm = document.getElementById('accountLoginForm');
-      const signupForm = document.getElementById('signupForm');
-      const joinListForm = document.getElementById('joinListForm');
-      const authForms = document.getElementById('authForms');
-      const loginMessage = document.getElementById('loginMessage');
-      const profileSection = document.getElementById('profileSection');
-      const profileEmail = document.getElementById('profileEmail');
-      const shareCodeDisplay = document.getElementById('shareCodeDisplay');
-      const passwordChangeForm = document.getElementById('passwordChangeForm');
       const shareCodeText = document.getElementById('shareCodeText');
-      
-      // Auth form buttons
-      const showSignupLink = document.getElementById('showSignupLink');
-      const showLoginLink = document.getElementById('showLoginLink');
-      const accountLoginButton = document.getElementById('accountLoginButton');
-      const signupButton = document.getElementById('signupButton');
-      const joinListButton = document.getElementById('joinListButton');
-      const createNewListButton = document.getElementById('createNewListButton');
-      
-      // Profile buttons
-      const logoutButton = document.getElementById('logoutButton');
-      const cancelPasswordChange = document.getElementById('cancelPasswordChange');
-      const saveNewPassword = document.getElementById('saveNewPassword');
-      const switchToSignup = document.getElementById('switchToSignup');
-      const authSubmit = document.getElementById('authSubmit');
-      
-      // Profile section elements
-      const showPasswordChange = document.getElementById('showPasswordChange');
       const copyShareCode = document.getElementById('copyShareCode');
+      const generateNewCode = document.getElementById('generateNewCode');
+      const joinCodeInput = document.getElementById('joinCodeInput');
+      const joinCodeButton = document.getElementById('joinCodeButton');
       
       // Search functionality
       const searchInput = document.getElementById('searchInput');
@@ -545,627 +406,126 @@
         }
       }
       
-      // Set initial state of UI elements before everything else
-      if (userInfoHeader) userInfoHeader.style.display = 'none';
-      if (headerLoginButton) headerLoginButton.style.display = 'block';
-      
-      // Secure hash function for passwords (SHA-256 with email salt)
-      function secureHash(password, email) {
-        if (typeof CryptoJS !== 'undefined') {
-          return CryptoJS.SHA256(password + email).toString();
-        } else {
-          // Fallback for when CryptoJS is not available
-          console.log('CryptoJS not available, using simple hashing');
-          let hash = 0;
-          const combined = password + email;
-          for (let i = 0; i < combined.length; i++) {
-            const char = combined.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32bit integer
-          }
-          return hash.toString();
-        }
-      }
-      
-      // Generate random share code
-      function generateShareCode() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let code = '';
-        for (let i = 0; i < 6; i++) {
-          code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return code;
-      }
-      
-      // Initialize users storage
-      let users = JSON.parse(localStorage.getItem('appUsers') || '{}');
-      let sharedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
-      
-      // Check if user is logged in
-      let currentUserEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
-      let currentSharedCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
-      
-      // Update UI based on login state
-      function updateUIAfterLogin() {
-        try {
-          const currentUserEmail = localStorage.getItem('currentUserEmail');
-          const currentSharedCode = localStorage.getItem('currentSharedCode');
-          
-          // Log the values for debugging
-          console.log('updateUIAfterLogin - currentUserEmail:', currentUserEmail);
-          console.log('updateUIAfterLogin - currentSharedCode:', currentSharedCode);
-          
-          // Get all UI elements
-          const profileSection = document.getElementById('profileSection');
-          const authForms = document.getElementById('authForms');
-          const accountInfo = document.getElementById('accountInfo');
-          const loginMessage = document.getElementById('loginMessage');
-          const userInfoHeader = document.getElementById('userInfo');
-          const headerLoginButton = document.getElementById('headerLoginButton');
-          const userAvatar = document.getElementById('userAvatar');
-          const userName = document.getElementById('userName');
-          const profileEmail = document.getElementById('profileEmail');
-          const shareCodeText = document.getElementById('shareCodeText');
-          const currentUserDisplay = document.getElementById('currentUserDisplay');
-          const shareCodeDisplay = document.getElementById('shareCodeDisplay');
-          
-          // Mobile elements
-          const accountInfoMobile = document.getElementById('accountInfoMobile');
-          const accountFormsMobile = document.getElementById('accountFormsMobile');
-          const currentUserDisplayMobile = document.getElementById('currentUserDisplayMobile');
-          const shareCodeDisplayMobile = document.getElementById('shareCodeDisplayMobile');
-          
-          if (currentUserEmail && currentSharedCode) {
-            // User is logged in
-            console.log('User is logged in - updating UI elements');
-            
-            // Handle header elements
-            if (userInfoHeader) {
-              userInfoHeader.style.display = 'flex';
-              if (headerLoginButton) headerLoginButton.style.display = 'none';
-            }
-            
-            // Update profile section elements
-            if (profileSection) profileSection.classList.add('active');
-            if (authForms) authForms.style.display = 'none';
-            if (loginMessage) loginMessage.style.display = 'none';
-            if (profileEmail) profileEmail.textContent = currentUserEmail;
-            if (shareCodeText) shareCodeText.textContent = currentSharedCode;
-            
-            // Update user avatar
-            if (userAvatar && currentUserEmail) {
-              const initial = currentUserEmail.charAt(0).toUpperCase();
-              userAvatar.textContent = initial;
-            }
-            
-            // Update user name in header
-            if (userName && currentUserEmail) {
-              const name = currentUserEmail.split('@')[0];
-              userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-            }
-            
-            // Update account info section (new UI)
-            if (accountInfo) accountInfo.style.display = 'block';
-            if (currentUserDisplay) currentUserDisplay.textContent = currentUserEmail;
-            if (shareCodeDisplay) shareCodeDisplay.textContent = currentSharedCode;
-            
-            // Update mobile elements
-            if (accountInfoMobile) accountInfoMobile.style.display = 'block';
-            if (accountFormsMobile) accountFormsMobile.style.display = 'none';
-            if (currentUserDisplayMobile) currentUserDisplayMobile.textContent = currentUserEmail;
-            if (shareCodeDisplayMobile) shareCodeDisplayMobile.textContent = currentSharedCode;
-          } else {
-            // User is not logged in
-            console.log('User is not logged in - updating UI elements');
-            
-            // Handle header elements
-            if (userInfoHeader) userInfoHeader.style.display = 'none';
-            if (headerLoginButton) headerLoginButton.style.display = 'block';
-            
-            // Update profile section elements
-            if (profileSection) profileSection.classList.remove('active');
-            if (authForms) authForms.style.display = 'block';
-            if (loginMessage) loginMessage.style.display = 'block';
-            
-            // Update account info section (new UI)
-            if (accountInfo) accountInfo.style.display = 'none';
-            
-            // Update mobile elements
-            if (accountInfoMobile) accountInfoMobile.style.display = 'none';
-            if (accountFormsMobile) accountFormsMobile.style.display = 'block';
-            
-            // Show login form
-            const accountLoginForm = document.getElementById('accountLoginForm');
-            const signupForm = document.getElementById('signupForm');
-            const joinListForm = document.getElementById('joinListForm');
-            
-            if (accountLoginForm) accountLoginForm.style.display = 'block';
-            if (signupForm) signupForm.style.display = 'none';
-            if (joinListForm) joinListForm.style.display = 'none';
-          }
-        } catch (error) {
-          console.error('Error in updateUIAfterLogin:', error);
-          alert('Error updating UI after login: ' + error.message);
-        }
-      }
-      
-      // Show login modal
-      if (headerLoginButton) {
-        headerLoginButton.addEventListener('click', function() {
-          // Redirect to account section instead of showing modal
-          document.querySelector('#accountSection').scrollIntoView({ behavior: 'smooth' });
-          // Highlight the section
-          document.querySelector('#accountSection').classList.add('highlight');
-          setTimeout(() => {
-            document.querySelector('#accountSection').classList.remove('highlight');
-          }, 2000);
-        });
-      }
-      
-      // User profile click
-      if (userInfoHeader) {
-        userInfoHeader.addEventListener('click', function() {
-          // Redirect to account section
-          document.querySelector('#accountSection').scrollIntoView({ behavior: 'smooth' });
-        });
-      }
-      
-      // Show signup form when signup link is clicked
-      if (showSignupLink) {
-        showSignupLink.addEventListener('click', function(e) {
-          e.preventDefault();
-          const accountLoginForm = document.getElementById('accountLoginForm');
-          const signupForm = document.getElementById('signupForm');
-          if (accountLoginForm) accountLoginForm.style.display = 'none';
-          if (signupForm) signupForm.style.display = 'block';
-        });
-      }
-      
-      // Show login form when login link is clicked
-      if (showLoginLink) {
-        showLoginLink.addEventListener('click', function(e) {
-          e.preventDefault();
-          const accountLoginForm = document.getElementById('accountLoginForm');
-          const signupForm = document.getElementById('signupForm');
-          if (accountLoginForm) accountLoginForm.style.display = 'block';
-          if (signupForm) signupForm.style.display = 'none';
-        });
-      }
-      
-      // Create new list when create link is clicked
-      const createNewListLink = document.getElementById('createNewListLink');
-      if (createNewListLink) {
-        createNewListLink.addEventListener('click', function(e) {
-          e.preventDefault();
-          const createNewListButton = document.getElementById('createNewListButton');
-          if (createNewListButton) {
-            createNewListButton.click();
-          }
-        });
-      }
-      
-      // Modal login/signup toggle
-      if (switchToSignup) {
-        switchToSignup.addEventListener('click', function(e) {
-          e.preventDefault();
-          // Close modal and redirect to signup in account section
-          loginModal.classList.remove('active');
-          document.querySelector('#accountSection').scrollIntoView({ behavior: 'smooth' });
-          accountLoginForm.style.display = 'none';
-          signupForm.style.display = 'block';
-        });
-      }
-      
-      // Cancel login modal
-      if (cancelLogin) {
-        cancelLogin.addEventListener('click', function() {
-          loginModal.classList.remove('active');
-        });
-      }
-      
-      // Login functionality
-      if (accountLoginButton) {
-        accountLoginButton.addEventListener('click', function() {
-          try {
-            console.log('Account login button clicked'); // Debug log
-            
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            console.log('Login attempt for:', email); // Debug log
-            
-            if (!email || !password) {
-              alert('Please enter both email and password');
-              return;
-            }
-            
-            // First, try to authenticate with Firebase
-            window.cloudSync.authenticate(email, password)
-              .then(user => {
-                console.log('Firebase authentication successful');
-                loginSuccess(email);
-              })
-              .catch(error => {
-                console.log('Firebase authentication failed, falling back to local auth');
-                
-                // Fall back to local authentication
-                cloudSync.getUsers()
-                  .then(users => {
-                    if (Object.keys(users).length === 0) {
-                      console.log('No users found in storage'); // Debug log
-                      alert('No accounts found. Please sign up first.');
-                      const accountLoginForm = document.getElementById('accountLoginForm');
-                      const signupForm = document.getElementById('signupForm');
-                      if (accountLoginForm) accountLoginForm.style.display = 'none';
-                      if (signupForm) signupForm.style.display = 'block';
-                      return;
-                    }
-                    
-                    try {
-                      // Check if user exists and if password matches
-                      if (users[email] && (users[email].password === password || users[email].password === secureHash(password, email))) {
-                        console.log('Login successful for:', email); // Debug log
-                        
-                        // If password was stored in plain text, update to hashed version
-                        if (users[email].password === password) {
-                          console.log('Upgrading password to hashed version');
-                          users[email].password = secureHash(password, email);
-                          cloudSync.saveUser(email, users[email]);
-                        }
-                        
-                        loginSuccess(email);
-                      } else {
-                        if (!users[email]) {
-                          console.log('User not found:', email); // Debug log
-                          alert('Account not found. Please check your email or sign up.');
-                        } else {
-                          console.log('Password incorrect for:', email); // Debug log
-                          console.log('Expected:', users[email].password);
-                          console.log('Received hash:', secureHash(password, email));
-                          alert('Incorrect password. Please try again.');
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Login error:', error);
-                      alert('Error during login: ' + error.message + '\nPlease try again.');
-                    }
-                  })
-                  .catch(error => {
-                    console.error('Error getting users:', error);
-                    alert('Error getting user data: ' + error.message);
-                  });
-              });
-            
-          } catch (error) {
-            console.error('Error in login button event:', error);
-            alert('Error during login process: ' + error.message);
-          }
-        });
-      }
-      
-      // Helper function for successful login
-      function loginSuccess(email) {
-        // Get or create share code
-        cloudSync.getUsers()
-          .then(users => {
-            if (users[email] && users[email].shareCode) {
-              console.log('User has share code:', users[email].shareCode);
-              cloudSync.setCurrentUser(email, users[email].shareCode);
-              updateUIAfterLogin();
-              alert('Login successful! Welcome back, ' + email);
-            } else {
-              // Show join list form or create new list
-              console.log('User has no share code, showing join form');
-              const shareCode = generateShareCode();
-              
-              if (!users[email]) {
-                users[email] = { email };
-              }
-              
-              users[email].shareCode = shareCode;
-              cloudSync.saveUser(email, users[email]);
-              
-              // Create empty shared list
-              const sharedList = {
-                owner: email,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                items: []
-              };
-              
-              cloudSync.saveSharedList(shareCode, sharedList);
-              cloudSync.setCurrentUser(email, shareCode);
-              updateUIAfterLogin();
-              alert('Login successful! A new grocery list has been created for you.');
-            }
-          })
-          .catch(error => {
-            console.error('Error getting user data:', error);
-            alert('Error getting user data: ' + error.message);
-          });
-      }
-      
-      // Add mobile-specific event listeners
-      const logoutButtonMobile = document.getElementById('logoutButtonMobile');
-      if (logoutButtonMobile) {
-        logoutButtonMobile.addEventListener('click', function() {
-          try {
-            // Sign out user
-            window.cloudSync.signOut()
-              .then(() => {
-                // Update UI
-                updateUIAfterLogin();
-                
-                console.log('User logged out');
-                alert('You have been logged out successfully.');
-                
-                // Scroll to top
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              })
-              .catch(error => {
-                console.error('Error signing out:', error);
-                alert('Error signing out: ' + error.message);
-              });
-          } catch (error) {
-            console.error('Error in logout button event:', error);
-            alert('Error during logout: ' + error.message);
-          }
-        });
-      }
-      
-      // Regular logout button
-      if (logoutButton) {
-        logoutButton.addEventListener('click', function() {
-          try {
-            // Sign out user
-            window.cloudSync.signOut()
-              .then(() => {
-                // Update UI
-                updateUIAfterLogin();
-                
-                console.log('User logged out');
-                alert('You have been logged out successfully.');
-              })
-              .catch(error => {
-                console.error('Error signing out:', error);
-                alert('Error signing out: ' + error.message);
-              });
-          } catch (error) {
-            console.error('Error in logout button event:', error);
-            alert('Error during logout: ' + error.message);
-          }
-        });
-      }
-      
-      // Copy share code mobile
-      const copyShareCodeMobile = document.getElementById('copyShareCodeMobile');
-      if (copyShareCodeMobile) {
-        copyShareCodeMobile.addEventListener('click', function() {
-          try {
-            const shareCodeDisplayMobile = document.getElementById('shareCodeDisplayMobile');
-            if (!shareCodeDisplayMobile) {
-              console.error('shareCodeDisplayMobile element not found');
-              return;
-            }
-            
-            const currentSharedCode = shareCodeDisplayMobile.textContent;
-            
-            if (navigator.clipboard) {
-              navigator.clipboard.writeText(currentSharedCode)
-                .then(() => {
-                  copyShareCodeMobile.textContent = "Copied!";
-                  setTimeout(() => {
-                    copyShareCodeMobile.textContent = "Copy";
-                  }, 2000);
-                })
-                .catch(err => {
-                  console.error('Could not copy text: ', err);
-                  alert('Failed to copy. Please copy the code manually.');
-                });
-            } else {
-              // Fallback for browsers without clipboard API
-              const textArea = document.createElement("textarea");
-              textArea.value = currentSharedCode;
-              document.body.appendChild(textArea);
-              textArea.focus();
-              textArea.select();
-              
-              try {
-                document.execCommand('copy');
-                copyShareCodeMobile.textContent = "Copied!";
-                setTimeout(() => {
-                  copyShareCodeMobile.textContent = "Copy";
-                }, 2000);
-              } catch (err) {
-                console.error('Could not copy text: ', err);
-                alert('Failed to copy. Please copy the code manually.');
-              }
-              
-              document.body.removeChild(textArea);
-            }
-          } catch (error) {
-            console.error('Error copying share code:', error);
-            alert('Error copying share code: ' + error.message);
-          }
-        });
-      }
-      
-      // Signup functionality
-      if (signupButton) {
-        signupButton.addEventListener('click', function() {
-          try {
-            console.log('Signup button clicked');
-            
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (!email || !password || !confirmPassword) {
-              alert('Please fill in all fields');
-              return;
-            }
-            
-            if (password !== confirmPassword) {
-              alert('Passwords do not match');
-              return;
-            }
-            
-            if (password.length < 6) {
-              alert('Password must be at least 6 characters');
-              return;
-            }
-            
-            // First try to authenticate with Firebase (create account)
-            window.cloudSync.authenticate(email, password)
-              .then(user => {
-                console.log('Firebase account created successfully');
-                createNewAccount(email, password);
-              })
-              .catch(error => {
-                console.log('Firebase account creation failed, falling back to local storage');
-                createNewAccount(email, password);
-              });
-            
-          } catch (error) {
-            console.error('Error in signup button event:', error);
-            alert('Error during signup: ' + error.message);
-          }
-        });
-      }
-      
-      // Helper function to create new account
-      function createNewAccount(email, password) {
-        // Check if user already exists
-        cloudSync.getUsers()
-          .then(users => {
-            if (users[email]) {
-              alert('An account with this email already exists. Please log in instead.');
-              return;
-            }
-            
-            // Generate share code for new user
-            const shareCode = generateShareCode();
-            
-            // Create new user
-            const hashedPw = secureHash(password, email);
-            const userData = {
-              email: email,
-              password: hashedPw,
-              shareCode: shareCode,
-              createdAt: new Date().toISOString()
-            };
-            
-            // Save user
-            cloudSync.saveUser(email, userData)
-              .then(() => {
-                // Create empty shared list
-                const sharedList = {
-                  owner: email,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  items: []
-                };
-                
-                // Save shared list
-                return cloudSync.saveSharedList(shareCode, sharedList);
-              })
-              .then(() => {
-                // Set current user
-                cloudSync.setCurrentUser(email, shareCode);
-                
-                // Update UI
-                updateUIAfterLogin();
-                
-                // Show success message
-                alert('Account created successfully! Welcome to Grocery & Meal Planner.');
-              })
-              .catch(error => {
-                console.error('Error creating account:', error);
-                alert('Error creating account: ' + error.message);
-              });
-          })
-          .catch(error => {
-            console.error('Error checking existing users:', error);
-            alert('Error checking existing users: ' + error.message);
-          });
-      }
-      
       // Initialize cloud sync
       if (window.cloudSync) {
         console.log('Initializing cloud sync...');
         window.cloudSync.init()
           .then(() => {
             console.log('Cloud sync initialized');
-            // Update UI based on current user
-            updateUIAfterLogin();
+            updateShareCode();
+            updateGroceryCounter();
           })
           .catch(error => {
             console.error('Error initializing cloud sync:', error);
           });
       } else {
         console.warn('Cloud sync not available');
-        // Fall back to local storage
-        updateUIAfterLogin();
       }
       
-      // Initialize UI based on login state
-      updateUIAfterLogin();
-      
-      // Function to save grocery list with cloud sync
-      function saveGroceryList(items) {
-        const currentUser = cloudSync.getCurrentUser();
+      // Update share code display
+      function updateShareCode() {
+        const deviceInfo = cloudSync.getCurrentDevice();
         
-        if (!currentUser.email || !currentUser.shareCode) {
-          console.log('No user logged in, saving to local storage only');
-          return false;
+        if (deviceInfo.shareCode) {
+          if (shareCodeText) shareCodeText.textContent = deviceInfo.shareCode;
         }
-        
-        // Get existing list
-        cloudSync.getSharedLists()
-          .then(lists => {
-            if (!lists[currentUser.shareCode]) {
-              console.error('Shared list not found:', currentUser.shareCode);
-              return;
+      }
+      
+      // Generate new share code
+      if (generateNewCode) {
+        generateNewCode.addEventListener('click', function() {
+          const newCode = cloudSync.generateShareCode();
+          cloudSync.setShareCode(newCode);
+          updateShareCode();
+          alert(`New share code generated: ${newCode}`);
+        });
+      }
+      
+      // Join someone's list
+      if (joinCodeButton) {
+        joinCodeButton.addEventListener('click', function() {
+          const code = joinCodeInput.value.trim().toUpperCase();
+          
+          if (!code || code.length !== 6) {
+            alert('Please enter a valid 6-character share code');
+            return;
+          }
+          
+          cloudSync.joinSharedList(code)
+            .then(() => {
+              alert(`Successfully joined list with code: ${code}`);
+              updateShareCode();
+              updateGroceryCounter();
+              // Optionally redirect to the grocery list
+              window.location.href = 'groceries.html';
+            })
+            .catch(error => {
+              console.error('Error joining list:', error);
+              alert(`Error joining list: ${error.message}`);
+            });
+        });
+      }
+      
+      // Copy share code
+      if (copyShareCode) {
+        copyShareCode.addEventListener('click', function() {
+          const code = shareCodeText.textContent;
+          
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(code)
+              .then(() => {
+                copyShareCode.textContent = "Copied!";
+                setTimeout(() => {
+                  copyShareCode.textContent = "Copy";
+                }, 2000);
+              })
+              .catch(err => {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy. Please copy the code manually.');
+              });
+          } else {
+            // Fallback for browsers without clipboard API
+            const textArea = document.createElement("textarea");
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+              document.execCommand('copy');
+              copyShareCode.textContent = "Copied!";
+              setTimeout(() => {
+                copyShareCode.textContent = "Copy";
+              }, 2000);
+            } catch (err) {
+              console.error('Could not copy text: ', err);
+              alert('Failed to copy. Please copy the code manually.');
             }
             
-            // Update list items
-            const listData = lists[currentUser.shareCode];
-            listData.items = items;
-            listData.updatedAt = new Date().toISOString();
-            
-            // Save updated list
-            return cloudSync.saveSharedList(currentUser.shareCode, listData);
-          })
-          .then(() => {
-            console.log('Grocery list saved successfully');
-            // Update counter
-            updateGroceryCounter();
-          })
-          .catch(error => {
-            console.error('Error saving grocery list:', error);
-            alert('Error saving grocery list: ' + error.message);
-          });
+            document.body.removeChild(textArea);
+          }
+        });
       }
       
       // Function to load grocery list from cloud sync
       function loadGroceryList() {
-        const currentUser = cloudSync.getCurrentUser();
+        const deviceInfo = cloudSync.getCurrentDevice();
         
-        if (!currentUser.email || !currentUser.shareCode) {
-          console.log('No user logged in, nothing to load');
+        if (!deviceInfo.shareCode) {
+          console.log('No share code, nothing to load');
           return Promise.resolve([]);
         }
         
         return new Promise((resolve, reject) => {
           cloudSync.getSharedLists()
             .then(lists => {
-              if (!lists[currentUser.shareCode]) {
-                console.warn('Shared list not found:', currentUser.shareCode);
+              if (!lists[deviceInfo.shareCode]) {
+                console.warn('Shared list not found:', deviceInfo.shareCode);
                 resolve([]);
                 return;
               }
               
-              const listData = lists[currentUser.shareCode];
+              const listData = lists[deviceInfo.shareCode];
               resolve(listData.items || []);
             })
             .catch(error => {
@@ -1177,12 +537,11 @@
       
       // Update grocery counter
       function updateGroceryCounter() {
-        const groceryCounter = document.getElementById('groceryCounter');
         if (!groceryCounter) return;
         
         loadGroceryList()
           .then(items => {
-            const count = items.length;
+            const count = items?.length || 0;
             groceryCounter.textContent = `${count} item${count !== 1 ? 's' : ''} on your list`;
           })
           .catch(error => {
@@ -1190,105 +549,6 @@
             groceryCounter.textContent = 'Error loading list';
           });
       }
-      
-      // Update grocery counter on page load
-      setTimeout(updateGroceryCounter, 1000);
-      
-      // Run QA tests to validate authentication system
-      setTimeout(() => {
-        console.log('-----------------------------------------------------');
-        console.log('Running automated QA tests for authentication system...');
-        console.log('-----------------------------------------------------');
-        
-        try {
-          // Test 1: Password hashing
-          console.log('Test 1: Password hashing');
-          const testEmail = 'test@example.com';
-          const testPassword = 'password123';
-          const hash1 = secureHash(testPassword, testEmail);
-          const hash2 = secureHash(testPassword, testEmail);
-          const hash3 = secureHash('wrongpassword', testEmail);
-          
-          console.log('Hash 1:', hash1);
-          console.log('Hash 2:', hash2);
-          console.log('Hash 3:', hash3);
-          
-          if (hash1 === hash2 && hash1 !== hash3) {
-            console.log('✅ Password hashing works correctly');
-          } else {
-            console.error('❌ Password hashing is inconsistent');
-          }
-          
-          // Test 2: User signup and login
-          console.log('Test 2: User signup and login');
-          
-          // Create test user
-          const testUser = {
-            email: 'qatest@example.com',
-            password: 'testpassword'
-          };
-          
-          // Check if test user already exists
-          if (users[testUser.email]) {
-            console.log('Test user already exists, deleting for clean test');
-            delete users[testUser.email];
-            
-            // Also delete any shared lists
-            Object.keys(sharedLists).forEach(code => {
-              if (sharedLists[code].owner === testUser.email) {
-                delete sharedLists[code];
-              }
-            });
-          }
-          
-          // Simulate signup
-          const shareCode = generateShareCode();
-          const hashedPw = secureHash(testUser.password, testUser.email);
-          
-          users[testUser.email] = {
-            password: hashedPw,
-            shareCode: shareCode,
-            createdAt: new Date().toISOString()
-          };
-          
-          sharedLists[shareCode] = {
-            owner: testUser.email,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            items: []
-          };
-          
-          // Test login with correct hashed password
-          const correctPassword = testUser.password;
-          const correctLogin = users[testUser.email].password === secureHash(correctPassword, testUser.email);
-          
-          if (correctLogin) {
-            console.log('✅ Login with correct password works');
-          } else {
-            console.error('❌ Login with correct password fails');
-            console.log('Expected hash:', users[testUser.email].password);
-            console.log('Actual hash:', secureHash(correctPassword, testUser.email));
-          }
-          
-          // Test login with wrong password
-          const wrongPassword = 'wrongpassword';
-          const wrongLogin = users[testUser.email].password === secureHash(wrongPassword, testUser.email);
-          
-          if (!wrongLogin) {
-            console.log('✅ Login with wrong password fails (as expected)');
-          } else {
-            console.error('❌ Login with wrong password succeeds (unexpected)');
-          }
-          
-          // Cleanup test data
-          delete users[testUser.email];
-          delete sharedLists[shareCode];
-          
-          console.log('QA tests passed successfully!');
-        } catch (error) {
-          console.error('Error during QA tests:', error);
-        }
-      }, 2000);
     });
   </script>
 </body>

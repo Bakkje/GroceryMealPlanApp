@@ -4,578 +4,179 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meal Plan - Grocery & Meal Planner</title>
+  
+  <!-- SEO Improvements -->
+  <meta name="description" content="Plan your weekly meals and organize recipes with our easy-to-use meal planning app. Generate grocery lists from your meal plans.">
+  <meta name="keywords" content="meal planning, food planning, weekly meals, recipe organization">
+  
+  <!-- PWA Support -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4CAF50">
   <link rel="icon" href="app-icon.svg">
   <link rel="apple-touch-icon" href="app-icon.png">
+  
+  <!-- Firebase Configuration -->
+  <script src="firebase-config.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
+  
+  <!-- Cloud Sync Module -->
+  <script src="cloud-sync.js"></script>
+  
   <style>
     /* Base styles */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background-color: #f8f9fa;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-    
-    .container {
-      width: 100%;
-      padding: 0 15px;
-      margin: 0 auto;
-      max-width: 100%;
-    }
-    
-    h1, h2, h3, h4 {
-      margin-bottom: 0.5rem;
-      line-height: 1.2;
-    }
-    
-    a {
-      text-decoration: none;
-    }
+    * {box-sizing:border-box;margin:0;padding:0}
+    body {font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Open Sans','Helvetica Neue',sans-serif;line-height:1.6;color:#333;background-color:#f8f9fa;max-width:100%;overflow-x:hidden}
+    .container {width:100%;padding:0 15px;margin:0 auto;max-width:100%}
+    h1,h2,h3,h4 {margin-bottom:.5rem;line-height:1.2}
     
     /* Header styles */
-    .header {
-      background-color: #4CAF50;
-      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
-      padding: 1.2rem;
-      color: white;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      position: relative;
-      border-radius: 0 0 16px 16px;
-      margin-bottom: 1rem;
+    .header {background-color:#4CAF50;color:#fff;padding:1rem;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+    .header h1 {margin:0;font-size:1.5rem}
+    .header-back {position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#fff;text-decoration:none;font-size:1.2rem}
+    
+    /* Calendar layout */
+    .calendar {display:grid;grid-template-columns:repeat(7, 1fr);gap:10px;margin:1rem 0;margin-bottom:70px}
+    .day {background-color:#fff;border-radius:10px;padding:12px;box-shadow:0 2px 5px rgba(0,0,0,0.1);min-height:120px}
+    .day-header {font-weight:bold;padding-bottom:5px;margin-bottom:8px;border-bottom:1px solid #eee;color:#4CAF50}
+    
+    /* Meal item styles */
+    .meal {background-color:#f5f5f5;padding:8px;margin-bottom:5px;border-radius:5px;cursor:move;position:relative}
+    .meal-time {font-size:0.8rem;color:#666;margin-bottom:2px}
+    .meal-delete {position:absolute;right:5px;top:5px;width:18px;height:18px;background-color:rgba(255,255,255,0.8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:none;cursor:pointer;color:#f44336}
+    
+    /* Add meal form */
+    .add-meal {margin:1rem 0;background-color:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+    .form-row {margin-bottom:10px;display:flex;gap:10px}
+    .form-group {display:flex;flex-direction:column;flex:1}
+    .form-group label {font-size:0.9rem;margin-bottom:5px;color:#555}
+    .form-control {padding:8px;border:1px solid #ddd;border-radius:5px;font-size:1rem}
+    .btn {background-color:#4CAF50;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;font-size:1rem}
+    .btn-secondary {background-color:#f1f1f1;color:#333}
+    
+    /* Sync status indicator */
+    .sync-status {display:flex;align-items:center;justify-content:center;margin:0.5rem 0;font-size:0.8rem;color:#666}
+    .sync-indicator {width:10px;height:10px;background-color:#ccc;border-radius:50%;margin-right:5px}
+    .sync-indicator.synced {background-color:#4CAF50}
+    .sync-indicator.syncing {background-color:#FFC107;animation:pulse 1.5s infinite}
+    @keyframes pulse {0% {opacity:0.5} 50% {opacity:1} 100% {opacity:0.5}}
+    
+    /* Offline indicator */
+    .offline-indicator {display:none;background-color:#f44336;color:#fff;text-align:center;padding:0.5rem;position:fixed;bottom:60px;left:0;right:0;z-index:50}
+    
+    /* Navigation */
+    .week-nav {display:flex;justify-content:space-between;align-items:center;margin:1rem 0}
+    .week-nav button {background:none;border:none;font-size:1.5rem;cursor:pointer;color:#4CAF50}
+    .current-week {font-weight:bold}
+    
+    /* Mobile Navigation */
+    .mobile-nav {position:fixed;bottom:0;left:0;width:100%;background-color:white;display:flex;justify-content:space-around;box-shadow:0 -4px 12px rgba(0,0,0,0.1);z-index:100;padding:10px 0}
+    .nav-item {display:flex;flex-direction:column;align-items:center;padding:5px 0;color:#666;text-decoration:none;font-size:.75rem;width:25%}
+    .nav-item.active {color:#4CAF50}
+    .nav-icon {font-size:1.2rem;margin-bottom:4px}
+    
+    /* Share section */
+    .share-section {margin:1rem 0;padding:1rem;background-color:#f0f7f0;border-radius:10px}
+    .share-code {font-size:1.2rem;font-weight:bold;color:#2E7D32;margin:0.5rem 0;letter-spacing:2px}
+    .share-section button {background-color:#4CAF50;color:#fff;border:none;padding:0.5rem 1rem;border-radius:5px;cursor:pointer;margin-top:0.5rem}
+    
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .calendar {grid-template-columns:repeat(1, 1fr)}
+      .day {margin-bottom:10px}
+      .form-row {flex-direction:column;gap:5px}
     }
     
-    .back-button {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.5rem;
-      color: white;
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    
-    .back-button:hover {
-      transform: translateY(-50%) scale(1.1);
-    }
-    
-    /* Mobile friendly navigation */
-    .mobile-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: white;
-      display: flex;
-      justify-content: space-around;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-      z-index: 100;
-      border-radius: 16px 16px 0 0;
-      padding: 4px 0;
-    }
-    
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 0;
-      color: #666;
-      text-decoration: none;
-      font-size: 0.75rem;
-      width: 25%;
-      position: relative;
-      transition: all 0.2s;
-    }
-    
-    .nav-item.active {
-      color: #4CAF50;
-    }
-    
-    .nav-item.active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      width: 40%;
-      height: 4px;
-      background-color: #4CAF50;
-      border-radius: 4px;
-    }
-    
-    .nav-icon {
-      font-size: 1.5rem;
-      margin-bottom: 4px;
-    }
-    
-    /* Page specific styles */
-    .page {
-      padding-bottom: 80px; /* Space for fixed navigation */
-    }
-    
-    /* Meal plan styles */
-    .date-navigation {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 1.2rem 0;
-      background: white;
-      padding: 0.8rem 1rem;
-      border-radius: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    
-    .nav-arrow {
-      font-size: 1.4rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0.5rem;
-      color: #4CAF50;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.2s;
-    }
-    
-    .nav-arrow:hover {
-      background-color: rgba(76, 175, 80, 0.1);
-    }
-    
-    .current-week {
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #333;
-    }
-    
-    .day-card {
-      background-color: white;
-      border-radius: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      margin-bottom: 1.2rem;
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border-left: 4px solid #E0E0E0;
-    }
-    
-    .day-card.today-card {
-      border-left: 4px solid #4CAF50;
-    }
-    
-    .day-header {
-      background-color: #f8f9fa;
-      padding: 0.9rem 1.2rem;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .day-date {
-      font-weight: 500;
-      color: #666;
-    }
-    
-    .today {
-      color: #4CAF50;
-      font-weight: 600;
-    }
-    
-    .day-meals {
-      padding: 0.8rem;
-    }
-    
-    .meal-item {
-      padding: 0.9rem 1.2rem;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: white;
-      border-radius: 12px;
-      margin-bottom: 0.8rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-    
-    .meal-item:hover {
-      background-color: #f5f5f5;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-    }
-    
-    .meal-item:last-child {
-      border-bottom: none;
-    }
-    
-    .meal-name {
-      flex: 1;
-      font-weight: 500;
-    }
-    
-    .meal-recipe-link {
-      color: inherit;
-      text-decoration: none;
-      display: block;
-    }
-    
-    .meal-actions {
-      display: flex;
-    }
-    
-    .meal-action {
-      background: none;
-      border: none;
-      cursor: pointer;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #999;
-      font-size: 1.1rem;
-      transition: all 0.2s;
-    }
-    
-    .meal-action:hover {
-      background-color: #f1f1f1;
-      color: #d32f2f;
-    }
-    
-    .add-meal {
-      background-color: #f8f9fa;
-      border: 1px dashed #ccc;
-      border-radius: 12px;
-      padding: 0.9rem;
-      text-align: center;
-      color: #666;
-      cursor: pointer;
-      margin: 0.8rem 0;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .add-meal:hover {
-      background-color: #e9ecef;
-      border-color: #bbb;
-    }
-    
-    .add-meal::before {
-      content: '+';
-      font-size: 1.2rem;
-      margin-right: 0.5rem;
-      font-weight: 500;
-    }
-    
-    /* Add meal modal */
-    .meal-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.6);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .meal-modal.active {
-      display: flex;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    .meal-modal-content {
-      background-color: white;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 500px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-      animation: slideUp 0.4s ease;
-    }
-    
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .meal-modal-header {
-      padding: 1.2rem;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .meal-modal-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .meal-modal-close {
-      background: none;
-      border: none;
-      font-size: 1.6rem;
-      cursor: pointer;
-      color: #666;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.2s;
-    }
-    
-    .meal-modal-close:hover {
-      background-color: #f1f1f1;
-      color: #333;
-    }
-    
-    .meal-modal-body {
-      padding: 1.5rem;
-    }
-    
-    .meal-option {
-      margin-bottom: 1.5rem;
-    }
-    
-    .meal-option-title {
-      margin-bottom: 0.8rem;
-      font-weight: 600;
-      color: #333;
-      font-size: 1.1rem;
-    }
-    
-    /* Form styles */
-    .form-group {
-      margin-bottom: 1.4rem;
-    }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 0.6rem;
-      font-weight: 500;
-      color: #555;
-    }
-    
-    .form-group input, 
-    .form-group select {
-      width: 100%;
-      padding: 0.85rem;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      font-size: 1rem;
-      transition: all 0.2s;
-    }
-    
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: #4CAF50;
-      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-    }
-    
-    .recipe-list {
-      max-height: 220px;
-      overflow-y: auto;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      background-color: #f9f9f9;
-    }
-    
-    .recipe-item {
-      padding: 0.9rem 1.2rem;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .recipe-item:last-child {
-      border-bottom: none;
-    }
-    
-    .recipe-item:hover {
-      background-color: #f0f0f0;
-    }
-    
-    .recipe-item.selected {
-      background-color: #e8f5e9;
-      border-left: 3px solid #4CAF50;
-      padding-left: calc(1.2rem - 3px);
-      color: #2E7D32;
-      font-weight: 500;
-    }
-    
-    .meal-modal-footer {
-      padding: 1.2rem;
-      border-top: 1px solid #eee;
-      display: flex;
-      justify-content: flex-end;
-    }
-    
-    /* Button styles */
-    .btn {
-      padding: 0.8rem 1.4rem;
-      border-radius: 12px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-left: 0.8rem;
-    }
-    
-    .btn-primary {
-      background-color: #4CAF50;
-      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
-      color: white;
-      box-shadow: 0 2px 6px rgba(0,128,0,0.2);
-    }
-    
-    .btn-primary:hover {
-      box-shadow: 0 4px 12px rgba(0,128,0,0.3);
-      transform: translateY(-2px);
-    }
-    
-    .btn-secondary {
-      background-color: #f1f1f1;
-      color: #333;
-    }
-    
-    .btn-secondary:hover {
-      background-color: #e0e0e0;
-    }
-    
-    /* Add button */
-    .add-button {
-      position: fixed;
-      bottom: 85px;
-      right: 20px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background-color: #4CAF50;
-      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      box-shadow: 0 4px 12px rgba(0,128,0,0.3);
-      border: none;
-      cursor: pointer;
-      z-index: 10;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .add-button:hover, .add-button:active {
-      transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(0,128,0,0.4);
-    }
-    
-    /* Improve UI for mobile view */
-    .day-name {
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #333;
-    }
-    
-    /* Smooth transitions */
-    * {
-      transition: background-color 0.2s, opacity 0.2s, color 0.2s;
+    @media (min-width: 768px) {
+      .container {max-width:720px}
     }
   </style>
 </head>
 <body>
   <header class="header">
-    <a href="index.html" class="back-button">←</a>
-    <h1>Meal Plan</h1>
+    <a href="index.html" class="header-back">←</a>
+    <h1>Weekly Meal Plan</h1>
   </header>
-
+  
   <div class="container">
-    <div class="page">
-      <div class="date-navigation">
-        <button class="nav-arrow" id="prevWeek">←</button>
-        <div class="current-week" id="currentWeek">May 1 - May 7</div>
-        <button class="nav-arrow" id="nextWeek">→</button>
-      </div>
-      
-      <div id="mealPlanContainer">
-        <!-- Day cards will be generated here -->
-      </div>
+    <div class="sync-status">
+      <div id="syncIndicator" class="sync-indicator"></div>
+      <span id="syncStatus">Loading...</span>
     </div>
-  </div>
-
-  <!-- Add Meal Modal -->
-  <div class="meal-modal" id="addMealModal">
-    <div class="meal-modal-content">
-      <div class="meal-modal-header">
-        <div class="meal-modal-title">Add Meal</div>
-        <button class="meal-modal-close" id="closeMealModal">×</button>
-      </div>
-      <div class="meal-modal-body">
-        <div class="meal-option">
-          <div class="meal-option-title">Custom Meal</div>
+    
+    <div class="share-section">
+      <h3>Your Share Code</h3>
+      <p>Share this code with family members to sync your meal plan</p>
+      <div class="share-code" id="shareCode"></div>
+      <button id="copyShareCodeBtn">Copy Code</button>
+    </div>
+    
+    <div class="week-nav">
+      <button id="prevWeek">←</button>
+      <div class="current-week" id="currentWeekDisplay">This Week</div>
+      <button id="nextWeek">→</button>
+    </div>
+    
+    <div id="calendar" class="calendar">
+      <!-- Calendar days will be generated dynamically -->
+    </div>
+    
+    <div class="add-meal">
+      <h3>Add New Meal</h3>
+      <form id="addMealForm">
+        <div class="form-row">
           <div class="form-group">
-            <input type="text" id="customMealName" placeholder="Enter meal name">
+            <label for="mealDay">Day</label>
+            <select id="mealDay" class="form-control" required>
+              <option value="">Select Day</option>
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="mealTime">Time</label>
+            <select id="mealTime" class="form-control" required>
+              <option value="">Select Time</option>
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
           </div>
         </div>
-        
-        <div class="meal-option">
-          <div class="meal-option-title">Select from Recipes</div>
-          <div class="recipe-list">
-            <div class="recipe-item">Pasta Bolognese</div>
-            <div class="recipe-item">Chicken Curry</div>
-            <div class="recipe-item">Vegetable Stir Fry</div>
-            <div class="recipe-item">Beef Tacos</div>
-            <div class="recipe-item">Greek Salad</div>
-            <div class="recipe-item">Mushroom Risotto</div>
-            <div class="recipe-item">Salmon with Roasted Vegetables</div>
-            <div class="recipe-item">Veggie Burger</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="mealName">Meal Name</label>
+            <input type="text" id="mealName" class="form-control" placeholder="e.g. Spaghetti Bolognese" required>
           </div>
         </div>
-      </div>
-      <div class="meal-modal-footer">
-        <button class="btn btn-secondary" id="cancelAddMeal">Cancel</button>
-        <button class="btn btn-primary" id="saveAddMeal">Add Meal</button>
-      </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="mealNotes">Notes (optional)</label>
+            <textarea id="mealNotes" class="form-control" placeholder="Recipe notes, ingredients needed, etc."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <button type="submit" class="btn">Add Meal</button>
+          <button type="button" id="generateGroceryList" class="btn btn-secondary">Generate Grocery List</button>
+        </div>
+      </form>
     </div>
   </div>
-
-  <!-- Bottom Navigation -->
+  
+  <!-- Offline indicator -->
+  <div id="offlineIndicator" class="offline-indicator">
+    You are offline. Changes will sync when you're back online.
+  </div>
+  
+  <!-- Mobile Navigation -->
   <nav class="mobile-nav">
     <a href="index.html" class="nav-item">
       <div class="nav-icon">🏠</div>
@@ -594,299 +195,446 @@
       <span>Recipes</span>
     </a>
   </nav>
-
+  
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // Elements
-      const mealPlanContainer = document.getElementById('mealPlanContainer');
-      const currentWeekEl = document.getElementById('currentWeek');
+      const calendar = document.getElementById('calendar');
+      const addMealForm = document.getElementById('addMealForm');
+      const mealDaySelect = document.getElementById('mealDay');
+      const mealTimeSelect = document.getElementById('mealTime');
+      const mealNameInput = document.getElementById('mealName');
+      const mealNotesInput = document.getElementById('mealNotes');
+      const generateGroceryListBtn = document.getElementById('generateGroceryList');
       const prevWeekBtn = document.getElementById('prevWeek');
       const nextWeekBtn = document.getElementById('nextWeek');
-      const addMealModal = document.getElementById('addMealModal');
-      const closeMealModal = document.getElementById('closeMealModal');
-      const cancelAddMeal = document.getElementById('cancelAddMeal');
-      const saveAddMeal = document.getElementById('saveAddMeal');
-      const customMealName = document.getElementById('customMealName');
-      const recipeItems = document.querySelectorAll('.recipe-item');
+      const currentWeekDisplay = document.getElementById('currentWeekDisplay');
+      const offlineIndicator = document.getElementById('offlineIndicator');
+      const syncIndicator = document.getElementById('syncIndicator');
+      const syncStatus = document.getElementById('syncStatus');
+      const shareCodeElement = document.getElementById('shareCode');
+      const copyShareCodeBtn = document.getElementById('copyShareCodeBtn');
       
-      // State
-      let currentDate = new Date();
-      let selectedDay = null;
-      let mealPlan = {}; // Object to store meals by date
+      // Variables
+      let currentWeekOffset = 0;
+      let meals = [];
       
-      // Initialize
-      generateWeekView();
+      // Check online status
+      if (!navigator.onLine) {
+        offlineIndicator.style.display = 'block';
+      }
       
-      // Event listeners
-      prevWeekBtn.addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() - 7);
-        generateWeekView();
+      window.addEventListener('online', function() {
+        offlineIndicator.style.display = 'none';
+        updateSyncStatus('Syncing...');
       });
       
-      nextWeekBtn.addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() + 7);
-        generateWeekView();
+      window.addEventListener('offline', function() {
+        offlineIndicator.style.display = 'block';
+        updateSyncStatus('Offline');
       });
       
-      // Close modal
-      closeMealModal.addEventListener('click', closeModal);
-      cancelAddMeal.addEventListener('click', closeModal);
-      
-      // Handle recipe selection
-      recipeItems.forEach(item => {
-        item.addEventListener('click', function() {
-          recipeItems.forEach(ri => ri.classList.remove('selected'));
-          this.classList.add('selected');
-        });
-      });
-      
-      // Save meal
-      saveAddMeal.addEventListener('click', function() {
-        let mealName = '';
-        const selectedRecipe = document.querySelector('.recipe-item.selected');
+      // Functions to update UI
+      function updateSyncStatus(status) {
+        syncStatus.textContent = status;
         
-        if (customMealName.value) {
-          mealName = customMealName.value;
-        } else if (selectedRecipe) {
-          mealName = selectedRecipe.textContent;
+        if (status === 'Synced') {
+          syncIndicator.className = 'sync-indicator synced';
+        } else if (status === 'Syncing...') {
+          syncIndicator.className = 'sync-indicator syncing';
+        } else {
+          syncIndicator.className = 'sync-indicator';
         }
-        
-        if (mealName && selectedDay) {
-          addMealToDay(selectedDay, mealName);
-          closeModal();
-        }
-      });
+      }
       
-      // Functions
-      function generateWeekView() {
-        mealPlanContainer.innerHTML = '';
-        
-        // Calculate start of week (Sunday)
-        const weekStart = new Date(currentDate);
-        weekStart.setDate(currentDate.getDate() - currentDate.getDay());
-        
-        // Update week label
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        currentWeekEl.textContent = formatDate(weekStart, 'short') + ' - ' + formatDate(weekEnd, 'short');
-        
-        // Generate days
-        for (let i = 0; i < 7; i++) {
-          const day = new Date(weekStart);
-          day.setDate(weekStart.getDate() + i);
+      // Initialize cloud sync
+      cloudSync.init()
+        .then(() => {
+          updateSyncStatus('Connected');
           
-          mealPlanContainer.appendChild(createDayCard(day));
-        }
-      }
-      
-      function createDayCard(date) {
-        const dateStr = formatDate(date, 'iso');
-        const isToday = isSameDay(date, new Date());
-        
-        // Create card elements
-        const card = document.createElement('div');
-        card.className = 'day-card';
-        if (isToday) {
-          card.classList.add('today-card');
-        }
-        
-        const header = document.createElement('div');
-        header.className = 'day-header';
-        
-        const dayName = document.createElement('div');
-        dayName.className = 'day-name';
-        dayName.textContent = formatDate(date, 'day');
-        
-        const dayDate = document.createElement('div');
-        dayDate.className = 'day-date' + (isToday ? ' today' : '');
-        dayDate.textContent = formatDate(date, 'date');
-        
-        header.appendChild(dayName);
-        header.appendChild(dayDate);
-        
-        const meals = document.createElement('div');
-        meals.className = 'day-meals';
-        
-        // Add existing meals
-        if (mealPlan[dateStr] && mealPlan[dateStr].length > 0) {
-          mealPlan[dateStr].forEach(meal => {
-            meals.appendChild(createMealItem(meal, dateStr));
+          // Display share code
+          const deviceInfo = cloudSync.getCurrentDevice();
+          if (deviceInfo.shareCode) {
+            shareCodeElement.textContent = deviceInfo.shareCode;
+          }
+          
+          // Set up sync listeners
+          cloudSync.onSyncStart(() => {
+            updateSyncStatus('Syncing...');
           });
-        }
-        
-        // Add "Add meal" button
-        const addMeal = document.createElement('div');
-        addMeal.className = 'add-meal';
-        addMeal.textContent = 'Add meal';
-        addMeal.addEventListener('click', function() {
-          openAddMealModal(dateStr);
+          
+          cloudSync.onSyncComplete(() => {
+            updateSyncStatus('Synced');
+          });
+          
+          // Load initial meals
+          loadMeals();
+        })
+        .catch(error => {
+          console.error('Error initializing cloud sync:', error);
+          updateSyncStatus('Connection error');
         });
-        
-        meals.appendChild(addMeal);
-        
-        // Assemble card
-        card.appendChild(header);
-        card.appendChild(meals);
-        
-        return card;
-      }
       
-      function createMealItem(mealName, dateStr) {
-        const meal = document.createElement('div');
-        meal.className = 'meal-item';
-        
-        const name = document.createElement('div');
-        name.className = 'meal-name';
-        name.textContent = mealName;
-        
-        // Make meal clickable to go to recipe
-        name.addEventListener('click', function() {
-          // Check if this meal is one of our recipe items
-          const isRecipe = Array.from(document.querySelectorAll('.recipe-item'))
-            .some(item => item.textContent === mealName);
+      // Copy share code
+      if (copyShareCodeBtn) {
+        copyShareCodeBtn.addEventListener('click', function() {
+          const code = shareCodeElement.textContent;
+          
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(code)
+              .then(() => {
+                copyShareCodeBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                  copyShareCodeBtn.textContent = 'Copy Code';
+                }, 2000);
+              })
+              .catch(err => {
+                alert('Failed to copy. Please copy manually.');
+              });
+          } else {
+            // Fallback
+            const textArea = document.createElement('textarea');
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
             
-          if (isRecipe) {
-            // Navigate to the recipe page with the meal name as parameter
-            window.location.href = `recipes.html?recipe=${encodeURIComponent(mealName)}`;
+            try {
+              document.execCommand('copy');
+              copyShareCodeBtn.textContent = 'Copied!';
+              setTimeout(() => {
+                copyShareCodeBtn.textContent = 'Copy Code';
+              }, 2000);
+            } catch (err) {
+              alert('Failed to copy. Please copy manually.');
+            }
+            
+            document.body.removeChild(textArea);
           }
         });
-        
-        const actions = document.createElement('div');
-        actions.className = 'meal-actions';
-        
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'meal-action';
-        removeBtn.innerHTML = '&times;'; // X symbol
-        removeBtn.setAttribute('title', 'Remove meal');
-        removeBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          removeMeal(dateStr, mealName);
-        });
-        
-        actions.appendChild(removeBtn);
-        
-        meal.appendChild(name);
-        meal.appendChild(actions);
-        
-        return meal;
       }
       
-      function openAddMealModal(dateStr) {
-        selectedDay = dateStr;
-        customMealName.value = '';
-        document.querySelectorAll('.recipe-item').forEach(item => {
-          item.classList.remove('selected');
-        });
-        addMealModal.classList.add('active');
-      }
-      
-      function closeModal() {
-        addMealModal.classList.remove('active');
-      }
-      
-      function addMealToDay(dateStr, mealName) {
-        if (!mealPlan[dateStr]) {
-          mealPlan[dateStr] = [];
+      // Load meals from cloud
+      function loadMeals() {
+        updateSyncStatus('Loading...');
+        
+        const deviceInfo = cloudSync.getCurrentDevice();
+        if (!deviceInfo || !deviceInfo.shareCode) {
+          console.warn('No share code available');
+          meals = [];
+          renderCalendar();
+          updateSyncStatus('No meal plan connected');
+          return;
         }
         
-        mealPlan[dateStr].push(mealName);
-        
-        // Save to localStorage
-        localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
-        
-        // Refresh the view
-        generateWeekView();
+        cloudSync.getSharedLists()
+          .then(lists => {
+            const listData = lists[deviceInfo.shareCode];
+            
+            if (!listData || !listData.mealPlan) {
+              console.warn('No meal plan found for code:', deviceInfo.shareCode);
+              meals = [];
+            } else {
+              meals = listData.mealPlan || [];
+            }
+            
+            renderCalendar();
+            updateSyncStatus('Synced');
+          })
+          .catch(error => {
+            console.error('Error loading meal plan:', error);
+            meals = [];
+            renderCalendar();
+            updateSyncStatus('Load error');
+          });
       }
       
-      function removeMeal(dateStr, mealName) {
-        if (mealPlan[dateStr]) {
-          const index = mealPlan[dateStr].indexOf(mealName);
-          if (index !== -1) {
-            mealPlan[dateStr].splice(index, 1);
+      // Save meals to cloud
+      function saveMeals() {
+        updateSyncStatus('Syncing...');
+        
+        const deviceInfo = cloudSync.getCurrentDevice();
+        if (!deviceInfo || !deviceInfo.shareCode) {
+          console.warn('No share code available, cannot save');
+          updateSyncStatus('Not connected');
+          return;
+        }
+        
+        cloudSync.getSharedLists()
+          .then(lists => {
+            let listData = lists[deviceInfo.shareCode] || {};
             
-            // Save to localStorage
-            localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
+            // Update meal plan data
+            listData.mealPlan = meals;
             
-            // Refresh the view
-            generateWeekView();
-          }
+            return cloudSync.updateSharedList(deviceInfo.shareCode, listData);
+          })
+          .then(() => {
+            updateSyncStatus('Synced');
+          })
+          .catch(error => {
+            console.error('Error saving meal plan:', error);
+            updateSyncStatus('Sync error');
+          });
+      }
+      
+      // Helper to get start date of a week based on offset
+      function getWeekStartDate(offset = 0) {
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const diff = now.getDate() - dayOfWeek + (offset * 7);
+        const startDate = new Date(now.setDate(diff));
+        startDate.setHours(0, 0, 0, 0);
+        return startDate;
+      }
+      
+      // Render calendar for current week
+      function renderCalendar() {
+        calendar.innerHTML = '';
+        
+        const startDate = getWeekStartDate(currentWeekOffset);
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // Update week display
+        if (currentWeekOffset === 0) {
+          currentWeekDisplay.textContent = 'This Week';
+        } else if (currentWeekOffset === 1) {
+          currentWeekDisplay.textContent = 'Next Week';
+        } else if (currentWeekOffset === -1) {
+          currentWeekDisplay.textContent = 'Last Week';
+        } else if (currentWeekOffset > 0) {
+          currentWeekDisplay.textContent = `${currentWeekOffset} Weeks Ahead`;
+        } else {
+          currentWeekDisplay.textContent = `${Math.abs(currentWeekOffset)} Weeks Ago`;
+        }
+        
+        // Create days
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(startDate);
+          date.setDate(startDate.getDate() + i);
+          
+          const dayEl = document.createElement('div');
+          dayEl.className = 'day';
+          dayEl.dataset.date = date.toISOString().split('T')[0];
+          
+          const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const headerEl = document.createElement('div');
+          headerEl.className = 'day-header';
+          headerEl.textContent = `${daysOfWeek[i]} (${dateStr})`;
+          dayEl.appendChild(headerEl);
+          
+          // Add meals for this day
+          const dayMeals = meals.filter(meal => {
+            const mealDate = new Date(meal.date);
+            return mealDate.toISOString().split('T')[0] === date.toISOString().split('T')[0];
+          });
+          
+          dayMeals.sort((a, b) => {
+            const timeOrder = { breakfast: 1, lunch: 2, dinner: 3, snack: 4 };
+            return timeOrder[a.time] - timeOrder[b.time];
+          });
+          
+          dayMeals.forEach(meal => {
+            const mealEl = document.createElement('div');
+            mealEl.className = 'meal';
+            mealEl.dataset.id = meal.id;
+            
+            const timeEl = document.createElement('div');
+            timeEl.className = 'meal-time';
+            timeEl.textContent = meal.time.charAt(0).toUpperCase() + meal.time.slice(1);
+            
+            const nameEl = document.createElement('div');
+            nameEl.textContent = meal.name;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'meal-delete';
+            deleteBtn.textContent = '×';
+            deleteBtn.setAttribute('aria-label', 'Delete meal');
+            deleteBtn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              deleteMeal(meal.id);
+            });
+            
+            mealEl.appendChild(timeEl);
+            mealEl.appendChild(nameEl);
+            mealEl.appendChild(deleteBtn);
+            
+            // Show notes on click
+            if (meal.notes) {
+              mealEl.addEventListener('click', function() {
+                alert(`Notes for ${meal.name}:\n\n${meal.notes}`);
+              });
+            }
+            
+            dayEl.appendChild(mealEl);
+          });
+          
+          calendar.appendChild(dayEl);
         }
       }
       
-      // Helper functions
-      function formatDate(date, format) {
-        const options = { 
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+      // Add new meal
+      addMealForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const dayIndex = parseInt(mealDaySelect.value);
+        const time = mealTimeSelect.value;
+        const name = mealNameInput.value.trim();
+        const notes = mealNotesInput.value.trim();
+        
+        if (isNaN(dayIndex) || !time || !name) {
+          alert('Please fill out all required fields');
+          return;
+        }
+        
+        const date = new Date(getWeekStartDate(currentWeekOffset));
+        date.setDate(date.getDate() + dayIndex);
+        
+        const newMeal = {
+          id: Date.now().toString(),
+          date: date.toISOString(),
+          time: time,
+          name: name,
+          notes: notes,
+          createdAt: new Date().toISOString()
         };
         
-        if (format === 'day') {
-          return date.toLocaleDateString(undefined, { weekday: 'short' });
-        } else if (format === 'date') {
-          return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        } else if (format === 'short') {
-          return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        } else if (format === 'iso') {
-          return date.toISOString().split('T')[0];
-        }
+        meals.push(newMeal);
+        renderCalendar();
+        saveMeals();
         
-        return date.toLocaleDateString(undefined, options);
+        // Reset form
+        addMealForm.reset();
+      });
+      
+      // Delete meal
+      function deleteMeal(id) {
+        if (confirm('Are you sure you want to delete this meal?')) {
+          meals = meals.filter(meal => meal.id !== id);
+          renderCalendar();
+          saveMeals();
+        }
       }
       
-      function isSameDay(d1, d2) {
-        return d1.getFullYear() === d2.getFullYear() &&
-               d1.getMonth() === d2.getMonth() &&
-               d1.getDate() === d2.getDate();
-      }
+      // Week navigation
+      prevWeekBtn.addEventListener('click', function() {
+        currentWeekOffset--;
+        renderCalendar();
+      });
       
-      // Load saved meal plan
-      const savedMealPlan = localStorage.getItem('mealPlan');
-      if (savedMealPlan) {
-        mealPlan = JSON.parse(savedMealPlan);
-      }
+      nextWeekBtn.addEventListener('click', function() {
+        currentWeekOffset++;
+        renderCalendar();
+      });
       
-      // Check for meal param in URL (from recipe page or home page)
-      const urlParams = new URLSearchParams(window.location.search);
-      const mealToAdd = urlParams.get('add');
-      const mealFromHome = urlParams.get('meal');
-      
-      if (mealToAdd) {
-        // Add the meal to today
-        const today = new Date();
-        const dateStr = formatDate(today, 'iso');
+      // Generate grocery list
+      generateGroceryListBtn.addEventListener('click', function() {
+        // Simple implementation - In a real app, this would parse ingredients
+        const currentDate = new Date();
         
-        addMealToDay(dateStr, decodeURIComponent(mealToAdd));
+        // Get meals for this week or selected week
+        const weekMeals = meals.filter(meal => {
+          const mealDate = new Date(meal.date);
+          const startDate = getWeekStartDate(currentWeekOffset);
+          const endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + 6);
+          
+          return mealDate >= startDate && mealDate <= endDate;
+        });
         
-        // Remove the parameter to prevent duplicate additions on refresh
-        window.history.replaceState({}, document.title, 'meal-plan.html');
-      } else if (mealFromHome) {
-        // Handle recent meal clicked from home page
-        const today = new Date();
-        const dateStr = formatDate(today, 'iso');
-        
-        // Check if meal already exists for today
-        let mealExists = false;
-        if (mealPlan[dateStr]) {
-          mealExists = mealPlan[dateStr].includes(decodeURIComponent(mealFromHome));
+        if (weekMeals.length === 0) {
+          alert('No meals planned for this week. Add some meals first!');
+          return;
         }
         
-        if (!mealExists) {
-          // Add meal without confirmation
-          addMealToDay(dateStr, decodeURIComponent(mealFromHome));
-        } else {
-          // Just scroll to today's card
-          setTimeout(() => {
-            const todayCard = document.querySelector('.day-date.today');
-            if (todayCard) {
-              todayCard.closest('.day-card').scrollIntoView({ behavior: 'smooth' });
-            }
-          }, 300);
+        // Extract ingredients from meal notes (very basic implementation)
+        let groceryItems = [];
+        
+        weekMeals.forEach(meal => {
+          // In a real app, you would parse ingredients more intelligently
+          if (meal.notes) {
+            const lines = meal.notes.split('\n');
+            lines.forEach(line => {
+              const trimmedLine = line.trim();
+              if (trimmedLine && !groceryItems.includes(trimmedLine)) {
+                groceryItems.push(trimmedLine);
+              }
+            });
+          }
+          
+          // Add the meal name as an item if no notes
+          if (!meal.notes && !groceryItems.includes(meal.name)) {
+            groceryItems.push(`Ingredients for ${meal.name}`);
+          }
+        });
+        
+        // Save to grocery list
+        saveToGroceryList(groceryItems);
+      });
+      
+      // Save items to grocery list
+      function saveToGroceryList(items) {
+        if (!items || items.length === 0) {
+          alert('No grocery items to add');
+          return;
         }
         
-        // Remove the parameter
-        window.history.replaceState({}, document.title, 'meal-plan.html');
+        updateSyncStatus('Adding to grocery list...');
+        
+        const deviceInfo = cloudSync.getCurrentDevice();
+        if (!deviceInfo || !deviceInfo.shareCode) {
+          console.warn('No share code available, cannot save');
+          alert('Cannot add to grocery list: No share code available');
+          return;
+        }
+        
+        cloudSync.getSharedLists()
+          .then(lists => {
+            let listData = lists[deviceInfo.shareCode] || {};
+            
+            // Get existing grocery items
+            let groceryItems = listData.items || [];
+            
+            // Add new items
+            items.forEach(itemText => {
+              // Check if item already exists
+              const exists = groceryItems.some(item => item.text === itemText);
+              
+              if (!exists) {
+                groceryItems.push({
+                  id: Date.now() + Math.random().toString(36).substr(2, 9),
+                  text: itemText,
+                  checked: false,
+                  timestamp: Date.now()
+                });
+              }
+            });
+            
+            // Update list data
+            listData.items = groceryItems;
+            
+            return cloudSync.updateSharedList(deviceInfo.shareCode, listData);
+          })
+          .then(() => {
+            updateSyncStatus('Synced');
+            alert(`Added ${items.length} items to your grocery list`);
+          })
+          .catch(error => {
+            console.error('Error adding to grocery list:', error);
+            updateSyncStatus('Sync error');
+            alert('Error adding to grocery list');
+          });
+      }
+      
+      // Register service worker for offline support
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('ServiceWorker registration failed:', error);
+          });
       }
     });
   </script>

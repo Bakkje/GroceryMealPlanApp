@@ -4,9 +4,9 @@ A mobile-friendly web application for managing your grocery shopping list and me
 
 ## Features
 
-- **User Authentication**: Create accounts using email and password
+- **Device-Based Identification**: Automatic device ID generation with no account creation needed
 - **Shared Lists**: Share your grocery list with family members using a 6-character share code
-- **Cross-Device Sync**: Export your account from one device and import it on another
+- **Cross-Device Sync**: Connect multiple devices using share codes
 - **Grocery List Management**: Add, remove, and check off items from your shopping list
 - **Meal Planning**: Plan your meals for the week and easily add ingredients to your grocery list
 - **Recipe Collection**: Browse and save your favorite recipes for easy meal planning
@@ -18,38 +18,35 @@ A mobile-friendly web application for managing your grocery shopping list and me
 ### Getting Started
 
 1. Open `index.html` in your web browser
-2. Create an account using your email and a password (minimum 6 characters)
-3. You'll receive a share code that you can give to family members to access your grocery list
+2. The app automatically generates a unique device ID and share code
+3. You'll see your share code that you can give to family members to access your grocery list
 
 ### Using on Multiple Devices
 
-1. On your computer, go to the Account section after logging in
-2. Click "Export Account Data"
-3. Copy the generated code
-4. On your phone or another device, visit the app and go to the login screen
-5. Scroll down to the "Import Account from Another Device" section
-6. Paste the code you copied and click "Import Account"
-7. You'll be automatically logged in with all your data available on the new device
+1. On your computer, find your share code in the Share & Sync section
+2. Copy the share code
+3. On your phone or another device, visit the app
+4. Enter the share code in the "Join Someone's List" section
+5. Click "Join" to connect to the same grocery list
 
 ### Sharing Your List
 
-1. After logging in, go to the Account section
-2. Find your share code displayed in the green box
-3. Click "Copy" to copy the code to your clipboard
-4. Share this code with family members
+1. Find your share code displayed in the Share & Sync section
+2. Click "Copy" to copy the code to your clipboard
+3. Share this code with family members
+4. If needed, you can generate a new share code by clicking "Generate New Code"
 
 ### Joining a Shared List
 
-1. Create an account or log in
-2. Enter the share code you received in the "Join Shared List" form
-3. Click "Join List" to access the shared grocery list
+1. Enter the share code you received in the "Join Someone's List" form
+2. Click "Join" to access the shared grocery list
 
 ### Managing Your Grocery List
 
 1. Navigate to the Grocery List page using the bottom navigation
-2. Add new items using the form at the top
+2. Add new items using the form at the bottom
 3. Check off items as you shop
-4. Categorized items help you navigate the store efficiently
+4. All changes sync automatically across connected devices
 
 ### Planning Meals
 
@@ -60,31 +57,38 @@ A mobile-friendly web application for managing your grocery shopping list and me
 
 ## Troubleshooting
 
-### Login Issues
-
-- Make sure you're using the correct email and password
-- If you forgot your password, use the "Clear All Data" button to reset (this will delete all accounts and data)
-- If you get "No accounts found" on a new device, use the Export/Import feature to transfer your account
-- Check the browser console for detailed error messages
-
 ### Sharing Issues
 
 - Share codes are 6 characters long and contain only letters and numbers
 - Make sure you're entering the code exactly as it was shared with you
 - If joining fails, ask the list owner to verify their share code
 
-### Export/Import Issues
+### Sync Issues
 
-- Make sure you copy the entire export code
-- The import code contains your account credentials and list data
-- If import fails, try creating a new export code on the original device
+- If changes aren't syncing, check your internet connection
+- The app will indicate when you're offline at the bottom of the screen
+- Changes made offline will sync automatically when you reconnect
 
 ## Technical Information
 
 This app is built with:
 - HTML5, CSS3, and JavaScript
-- LocalStorage for data persistence
+- IndexedDB for local data persistence
+- Firebase Realtime Database for cloud synchronization (optional)
 - Service worker for offline capabilities
 - Web app manifest for installability
 
-The app runs entirely in the browser without requiring a server. 
+The app can run entirely in the browser without requiring external services, but connecting to Firebase enhances the cloud sync capability.
+
+## Firebase Setup (Optional)
+
+To enable cloud synchronization:
+
+1. Create a Firebase account and project at [firebase.google.com](https://firebase.google.com)
+2. Add a web app to your Firebase project
+3. Enable the Realtime Database
+4. Copy your Firebase configuration
+5. Update the `firebase-config.js` file with your configuration details
+6. Uncomment the initialization line at the bottom of `firebase-config.js`
+
+Without Firebase configuration, the app will still work using local storage only. 

@@ -24,7 +24,8 @@ if (window.firebaseConfig) {
 
 // Global variables
 let db;
-let currentUser = null;
+let deviceId = null;
+let shareCode = null;
 let firebaseApp;
 let firebaseDB;
 let syncInProgress = false;
@@ -37,6 +38,9 @@ function initCloudSync() {
     // Initialize local storage first
     initIndexedDB()
       .then(() => {
+        // Initialize device ID
+        initDeviceId();
+        
         // Then initialize Firebase (if available)
         if (typeof firebase !== 'undefined') {
           try {
@@ -45,18 +49,9 @@ function initCloudSync() {
             firebaseDB = firebase.database();
             console.log('Firebase initialized successfully');
             
-            // Check if user is already logged in
-            firebase.auth().onAuthStateChanged(user => {
-              if (user) {
-                console.log('User is signed in:', user.email);
-                currentUser = user;
-                setupSyncListeners();
-              } else {
-                console.log('No user is signed in');
-                currentUser = null;
-              }
-              resolve();
-            });
+            // Set up sync listeners
+            setupSyncListeners();
+            resolve();
           } catch (error) {
             console.error('Firebase initialization error:', error);
             resolve(); // Continue anyway with local storage
@@ -82,20 +77,12 @@ function initIndexedDB() {
       const db = event.target.result;
       
       // Create stores for different types of data
-      if (!db.objectStoreNames.contains('users')) {
-        db.createObjectStore('users', { keyPath: 'email' });
-      }
-      
       if (!db.objectStoreNames.contains('sharedLists')) {
         db.createObjectStore('sharedLists', { keyPath: 'shareCode' });
       }
       
-      if (!db.objectStoreNames.contains('mealPlans')) {
-        db.createObjectStore('mealPlans', { keyPath: 'id' });
-      }
-      
-      if (!db.objectStoreNames.contains('recipes')) {
-        db.createObjectStore('recipes', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('deviceInfo')) {
+        db.createObjectStore('deviceInfo', { keyPath: 'id' });
       }
       
       if (!db.objectStoreNames.contains('syncQueue')) {
@@ -120,33 +107,58 @@ function initIndexedDB() {
   });
 }
 
+// Generate a unique device ID if it doesn't exist
+function initDeviceId() {
+  deviceId = localStorage.getItem('deviceId');
+  shareCode = localStorage.getItem('shareCode');
+  
+  if (!deviceId) {
+    deviceId = generateUniqueId();
+    localStorage.setItem('deviceId', deviceId);
+  }
+  
+  if (!shareCode) {
+    shareCode = generateShareCode();
+    localStorage.setItem('shareCode', shareCode);
+  }
+  
+  console.log(`Device ID: ${deviceId}, Share Code: ${shareCode}`);
+}
+
+// Generate a unique ID for the device
+function generateUniqueId() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Generate random share code
+function generateShareCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 // Migrate data from localStorage to IndexedDB
 function migrateFromLocalStorage() {
   return new Promise((resolve, reject) => {
     try {
       // Check for existing localStorage data
-      const localUsers = JSON.parse(localStorage.getItem('appUsers') || '{}');
       const localSharedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
-      const currentUserEmail = localStorage.getItem('currentUserEmail');
-      const currentSharedCode = localStorage.getItem('currentSharedCode');
       
       // If we have localStorage data, move it to IndexedDB
-      const hasData = Object.keys(localUsers).length > 0 || Object.keys(localSharedLists).length > 0;
+      const hasData = Object.keys(localSharedLists).length > 0;
       
       if (hasData) {
         console.log('Migrating data from localStorage to IndexedDB...');
         
-        const transaction = db.transaction(['users', 'sharedLists'], 'readwrite');
-        const userStore = transaction.objectStore('users');
+        const transaction = db.transaction(['sharedLists'], 'readwrite');
         const sharedListStore = transaction.objectStore('sharedLists');
-        
-        // Migrate users
-        Object.keys(localUsers).forEach(email => {
-          const userData = localUsers[email];
-          userData.email = email;
-          userData.lastUpdated = new Date().toISOString();
-          userStore.put(userData);
-        });
         
         // Migrate shared lists
         Object.keys(localSharedLists).forEach(shareCode => {
@@ -158,12 +170,6 @@ function migrateFromLocalStorage() {
         
         transaction.oncomplete = () => {
           console.log('Migration completed successfully');
-          
-          // Save current user info
-          if (currentUserEmail && currentSharedCode) {
-            setCurrentUser(currentUserEmail, currentSharedCode);
-          }
-          
           resolve();
         };
         
@@ -182,128 +188,81 @@ function migrateFromLocalStorage() {
   });
 }
 
-// Authenticate user with Firebase
-function authenticateUser(email, password) {
+// Join a shared list
+function joinSharedList(code) {
   return new Promise((resolve, reject) => {
-    if (typeof firebase === 'undefined') {
-      reject(new Error('Firebase is not available, cannot authenticate user'));
+    if (!code || code.length !== 6) {
+      reject(new Error('Invalid share code'));
       return;
     }
     
-    firebase.auth().signInWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        // Signed in
-        currentUser = userCredential.user;
-        console.log('User authenticated:', currentUser.email);
-        setupSyncListeners();
-        resolve(currentUser);
-      })
-      .catch(error => {
-        console.error('Authentication error:', error);
-        
-        // If user doesn't exist, create it
-        if (error.code === 'auth/user-not-found') {
-          firebase.auth().createUserWithEmailAndPassword(email, password)
-            .then(userCredential => {
-              // Signed up & in
-              currentUser = userCredential.user;
-              console.log('New user created and authenticated:', currentUser.email);
-              setupSyncListeners();
-              resolve(currentUser);
-            })
-            .catch(createError => {
-              console.error('User creation error:', createError);
-              reject(createError);
-            });
-        } else {
-          reject(error);
-        }
-      });
-  });
-}
-
-// Sign out user
-function signOutUser() {
-  return new Promise((resolve, reject) => {
-    // Clear local current user
-    localStorage.removeItem('currentUserEmail');
-    localStorage.removeItem('currentSharedCode');
-    currentUser = null;
-    
-    // Sign out from Firebase if available
-    if (typeof firebase !== 'undefined') {
-      firebase.auth().signOut()
+    // Check if the shared list exists in Firebase
+    if (firebaseDB) {
+      const sharedRef = firebaseDB.ref(`sharedLists/${code}`);
+      
+      sharedRef.once('value')
+        .then(snapshot => {
+          if (snapshot.exists()) {
+            // List exists, save the share code
+            shareCode = code;
+            localStorage.setItem('shareCode', code);
+            
+            // Set up sync listeners for the new code
+            setupSyncListeners();
+            
+            // Sync the list from Firebase
+            return syncSharedListFromCloud(code);
+          } else {
+            reject(new Error('Shared list not found'));
+          }
+        })
         .then(() => {
-          console.log('User signed out from Firebase');
           resolve();
         })
         .catch(error => {
-          console.error('Firebase sign out error:', error);
+          console.error('Error joining shared list:', error);
           reject(error);
         });
     } else {
+      // No Firebase, just save the share code locally
+      shareCode = code;
+      localStorage.setItem('shareCode', code);
       resolve();
     }
   });
 }
 
-// Set current user info
-function setCurrentUser(email, shareCode) {
-  localStorage.setItem('currentUserEmail', email);
-  localStorage.setItem('currentSharedCode', shareCode);
-  return { email, shareCode };
+// Get the current device info
+function getCurrentDevice() {
+  return {
+    deviceId,
+    shareCode
+  };
 }
 
-// Get current user info
-function getCurrentUser() {
-  return {
-    email: localStorage.getItem('currentUserEmail'),
-    shareCode: localStorage.getItem('currentSharedCode')
-  };
+// Set share code
+function setShareCode(code) {
+  shareCode = code;
+  localStorage.setItem('shareCode', code);
+  return { deviceId, shareCode };
 }
 
 // Setup listeners for real-time sync
 function setupSyncListeners() {
-  if (!currentUser || !firebaseDB) return;
-  
-  const userEmail = currentUser.email;
-  const userId = userEmail.replace(/[.#$/[\]]/g, '_');
+  if (!firebaseDB || !shareCode) return;
   
   // Listen for changes to shared lists
-  const sharedListsRef = firebaseDB.ref(`users/${userId}/sharedLists`);
+  const sharedListRef = firebaseDB.ref(`sharedLists/${shareCode}`);
   
-  sharedListsRef.on('child_changed', snapshot => {
+  sharedListRef.on('child_changed', snapshot => {
     if (syncInProgress) return;
     
-    const shareCode = snapshot.key;
     const cloudData = snapshot.val();
     
     console.log(`Cloud data changed for list ${shareCode}, updating local storage...`);
     
     // Update local data
     updateLocalSharedList(shareCode, cloudData);
-  });
-}
-
-// Get users from IndexedDB
-function getUsers() {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['users'], 'readonly');
-    const store = transaction.objectStore('users');
-    const request = store.getAll();
-    
-    request.onsuccess = event => {
-      const users = {};
-      event.target.result.forEach(user => {
-        users[user.email] = user;
-      });
-      resolve(users);
-    };
-    
-    request.onerror = event => {
-      console.error('Error getting users:', event.target.error);
-      reject(event.target.error);
-    };
   });
 }
 
@@ -329,42 +288,6 @@ function getSharedLists() {
   });
 }
 
-// Save user to IndexedDB and sync to cloud
-function saveUser(email, userData) {
-  return new Promise((resolve, reject) => {
-    // Add email field to userData
-    userData.email = email;
-    userData.lastUpdated = new Date().toISOString();
-    
-    const transaction = db.transaction(['users'], 'readwrite');
-    const store = transaction.objectStore('users');
-    const request = store.put(userData);
-    
-    request.onsuccess = () => {
-      console.log('User saved locally:', email);
-      
-      // Sync to cloud if user is authenticated
-      if (currentUser && firebaseDB) {
-        syncUserToCloud(email, userData)
-          .then(() => resolve())
-          .catch(error => {
-            console.error('Error syncing user to cloud:', error);
-            addToSyncQueue('users', email, userData);
-            resolve(); // Still resolve as local save succeeded
-          });
-      } else {
-        addToSyncQueue('users', email, userData);
-        resolve();
-      }
-    };
-    
-    request.onerror = event => {
-      console.error('Error saving user:', event.target.error);
-      reject(event.target.error);
-    };
-  });
-}
-
 // Save shared list to IndexedDB and sync to cloud
 function saveSharedList(shareCode, listData) {
   return new Promise((resolve, reject) => {
@@ -379,8 +302,8 @@ function saveSharedList(shareCode, listData) {
     request.onsuccess = () => {
       console.log('Shared list saved locally:', shareCode);
       
-      // Sync to cloud if user is authenticated
-      if (currentUser && firebaseDB) {
+      // Sync to cloud if Firebase is available
+      if (firebaseDB) {
         syncSharedListToCloud(shareCode, listData)
           .then(() => resolve())
           .catch(error => {
@@ -401,77 +324,56 @@ function saveSharedList(shareCode, listData) {
   });
 }
 
-// Sync user to cloud
-function syncUserToCloud(email, userData) {
-  return new Promise((resolve, reject) => {
-    if (!currentUser || !firebaseDB) {
-      reject(new Error('Not authenticated or Firebase not available'));
-      return;
-    }
-    
-    const userId = email.replace(/[.#$/[\]]/g, '_');
-    const userRef = firebaseDB.ref(`users/${userId}/userData`);
-    
-    syncInProgress = true;
-    
-    userRef.set(userData)
-      .then(() => {
-        console.log('User synced to cloud:', email);
-        syncInProgress = false;
-        resolve();
-      })
-      .catch(error => {
-        console.error('Error syncing user to cloud:', error);
-        syncInProgress = false;
-        reject(error);
-      });
-  });
-}
-
 // Sync shared list to cloud
 function syncSharedListToCloud(shareCode, listData) {
   return new Promise((resolve, reject) => {
-    if (!currentUser || !firebaseDB) {
-      reject(new Error('Not authenticated or Firebase not available'));
+    if (!firebaseDB) {
+      reject(new Error('Firebase not available'));
       return;
     }
     
-    const userId = currentUser.email.replace(/[.#$/[\]]/g, '_');
-    const listRef = firebaseDB.ref(`users/${userId}/sharedLists/${shareCode}`);
+    const listRef = firebaseDB.ref(`sharedLists/${shareCode}`);
     
     syncInProgress = true;
     
     listRef.set(listData)
       .then(() => {
         console.log('Shared list synced to cloud:', shareCode);
-        
-        // Also update shared references for other users
-        if (listData.owner === currentUser.email) {
-          // This is the owner, update the shared reference
-          const sharedRef = firebaseDB.ref(`sharedLists/${shareCode}`);
-          sharedRef.set({
-            owner: listData.owner,
-            updatedAt: listData.updatedAt,
-            reference: `users/${userId}/sharedLists/${shareCode}`
-          })
-            .then(() => {
-              console.log('Shared reference updated');
-              syncInProgress = false;
-              resolve();
-            })
-            .catch(error => {
-              console.error('Error updating shared reference:', error);
-              syncInProgress = false;
-              reject(error);
-            });
-        } else {
-          syncInProgress = false;
-          resolve();
-        }
+        syncInProgress = false;
+        resolve();
       })
       .catch(error => {
         console.error('Error syncing shared list to cloud:', error);
         syncInProgress = false;
+        reject(error);
+      });
+  });
+}
+
+// Sync shared list from cloud
+function syncSharedListFromCloud(shareCode) {
+  return new Promise((resolve, reject) => {
+    if (!firebaseDB) {
+      reject(new Error('Firebase not available'));
+      return;
+    }
+    
+    const listRef = firebaseDB.ref(`sharedLists/${shareCode}`);
+    
+    listRef.once('value')
+      .then(snapshot => {
+        if (snapshot.exists()) {
+          const cloudData = snapshot.val();
+          return updateLocalSharedList(shareCode, cloudData);
+        } else {
+          reject(new Error('Shared list not found'));
+        }
+      })
+      .then(listData => {
+        resolve(listData);
+      })
+      .catch(error => {
+        console.error('Error syncing shared list from cloud:', error);
         reject(error);
       });
   });
@@ -553,8 +455,8 @@ function addToSyncQueue(storeName, itemKey, itemData) {
 // Process sync queue
 function processSyncQueue() {
   return new Promise((resolve, reject) => {
-    if (!currentUser || !firebaseDB) {
-      console.log('Not authenticated or Firebase not available, skipping sync');
+    if (!firebaseDB) {
+      console.log('Firebase not available, skipping sync');
       resolve();
       return;
     }
@@ -569,9 +471,7 @@ function processSyncQueue() {
       
       for (const item of items) {
         try {
-          if (item.storeName === 'users') {
-            await syncUserToCloud(item.itemKey, item.itemData);
-          } else if (item.storeName === 'sharedLists') {
+          if (item.storeName === 'sharedLists') {
             await syncSharedListToCloud(item.itemKey, item.itemData);
           }
           
@@ -673,14 +573,12 @@ function setupNetworkStatusListeners() {
 // Export functions
 window.cloudSync = {
   init: initCloudSync,
-  authenticate: authenticateUser,
-  signOut: signOutUser,
-  getUsers,
   getSharedLists,
-  saveUser,
   saveSharedList,
-  getCurrentUser,
-  setCurrentUser
+  getCurrentDevice,
+  setShareCode,
+  joinSharedList,
+  generateShareCode
 };
 
 // Run initialization when script loads
