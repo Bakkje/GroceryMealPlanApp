@@ -22,6 +22,17 @@
   <!-- CryptoJS for password hashing - with async loading -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" async></script>
   
+  <!-- Firebase Configuration -->
+  <script src="firebase-config.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
+  
+  <!-- Cloud Sync Module -->
+  <script src="cloud-sync.js"></script>
+  
   <!-- Compressed and Optimized CSS -->
   <style>
     /* Base styles */
@@ -768,65 +779,63 @@
               return;
             }
             
-            // Check if users object exists and has data
-            if (!users || Object.keys(users).length === 0) {
-              console.log('No users found in storage'); // Debug log
-              alert('No accounts found. Please sign up first.');
-              const accountLoginForm = document.getElementById('accountLoginForm');
-              const signupForm = document.getElementById('signupForm');
-              if (accountLoginForm) accountLoginForm.style.display = 'none';
-              if (signupForm) signupForm.style.display = 'block';
-              return;
-            }
+            // First, try to authenticate with Firebase
+            window.cloudSync.authenticate(email, password)
+              .then(user => {
+                console.log('Firebase authentication successful');
+                loginSuccess(email);
+              })
+              .catch(error => {
+                console.log('Firebase authentication failed, falling back to local auth');
+                
+                // Fall back to local authentication
+                cloudSync.getUsers()
+                  .then(users => {
+                    if (Object.keys(users).length === 0) {
+                      console.log('No users found in storage'); // Debug log
+                      alert('No accounts found. Please sign up first.');
+                      const accountLoginForm = document.getElementById('accountLoginForm');
+                      const signupForm = document.getElementById('signupForm');
+                      if (accountLoginForm) accountLoginForm.style.display = 'none';
+                      if (signupForm) signupForm.style.display = 'block';
+                      return;
+                    }
+                    
+                    try {
+                      // Check if user exists and if password matches
+                      if (users[email] && (users[email].password === password || users[email].password === secureHash(password, email))) {
+                        console.log('Login successful for:', email); // Debug log
+                        
+                        // If password was stored in plain text, update to hashed version
+                        if (users[email].password === password) {
+                          console.log('Upgrading password to hashed version');
+                          users[email].password = secureHash(password, email);
+                          cloudSync.saveUser(email, users[email]);
+                        }
+                        
+                        loginSuccess(email);
+                      } else {
+                        if (!users[email]) {
+                          console.log('User not found:', email); // Debug log
+                          alert('Account not found. Please check your email or sign up.');
+                        } else {
+                          console.log('Password incorrect for:', email); // Debug log
+                          console.log('Expected:', users[email].password);
+                          console.log('Received hash:', secureHash(password, email));
+                          alert('Incorrect password. Please try again.');
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Login error:', error);
+                      alert('Error during login: ' + error.message + '\nPlease try again.');
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error getting users:', error);
+                    alert('Error getting user data: ' + error.message);
+                  });
+              });
             
-            console.log('Checking credentials against:', Object.keys(users).join(', ')); // Debug log
-            console.log('User record:', users[email]); // Show user record for debugging
-            
-            try {
-              // Check if user exists and if password matches
-              // First try with plain password (for backward compatibility)
-              if (users[email] && (users[email].password === password || users[email].password === secureHash(password, email))) {
-                console.log('Login successful for:', email); // Debug log
-                
-                // If password was stored in plain text, update to hashed version
-                if (users[email].password === password) {
-                  console.log('Upgrading password to hashed version');
-                  users[email].password = secureHash(password, email);
-                  localStorage.setItem('appUsers', JSON.stringify(users));
-                }
-                
-                // Store current user in session
-                localStorage.setItem('currentUserEmail', email);
-                
-                // Check if user has a share code
-                if (users[email].shareCode) {
-                  console.log('User has share code:', users[email].shareCode); // Debug log
-                  localStorage.setItem('currentSharedCode', users[email].shareCode);
-                  updateUIAfterLogin();
-                  alert('Login successful! Welcome back, ' + email);
-                } else {
-                  // Show join list form
-                  console.log('User has no share code, showing join form'); // Debug log
-                  const accountLoginForm = document.getElementById('accountLoginForm');
-                  const joinListForm = document.getElementById('joinListForm');
-                  if (accountLoginForm) accountLoginForm.style.display = 'none';
-                  if (joinListForm) joinListForm.style.display = 'block';
-                }
-              } else {
-                if (!users[email]) {
-                  console.log('User not found:', email); // Debug log
-                  alert('Account not found. Please check your email or sign up.');
-                } else {
-                  console.log('Password incorrect for:', email); // Debug log
-                  console.log('Expected:', users[email].password);
-                  console.log('Received hash:', secureHash(password, email));
-                  alert('Incorrect password. Please try again.');
-                }
-              }
-            } catch (error) {
-              console.error('Login error:', error);
-              alert('Error during login: ' + error.message + '\nPlease try again.');
-            }
           } catch (error) {
             console.error('Error in login button event:', error);
             alert('Error during login process: ' + error.message);
@@ -834,23 +843,69 @@
         });
       }
       
+      // Helper function for successful login
+      function loginSuccess(email) {
+        // Get or create share code
+        cloudSync.getUsers()
+          .then(users => {
+            if (users[email] && users[email].shareCode) {
+              console.log('User has share code:', users[email].shareCode);
+              cloudSync.setCurrentUser(email, users[email].shareCode);
+              updateUIAfterLogin();
+              alert('Login successful! Welcome back, ' + email);
+            } else {
+              // Show join list form or create new list
+              console.log('User has no share code, showing join form');
+              const shareCode = generateShareCode();
+              
+              if (!users[email]) {
+                users[email] = { email };
+              }
+              
+              users[email].shareCode = shareCode;
+              cloudSync.saveUser(email, users[email]);
+              
+              // Create empty shared list
+              const sharedList = {
+                owner: email,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                items: []
+              };
+              
+              cloudSync.saveSharedList(shareCode, sharedList);
+              cloudSync.setCurrentUser(email, shareCode);
+              updateUIAfterLogin();
+              alert('Login successful! A new grocery list has been created for you.');
+            }
+          })
+          .catch(error => {
+            console.error('Error getting user data:', error);
+            alert('Error getting user data: ' + error.message);
+          });
+      }
+      
       // Add mobile-specific event listeners
       const logoutButtonMobile = document.getElementById('logoutButtonMobile');
       if (logoutButtonMobile) {
         logoutButtonMobile.addEventListener('click', function() {
           try {
-            // Remove user session
-            localStorage.removeItem('currentUserEmail');
-            localStorage.removeItem('currentSharedCode');
-            
-            // Update UI
-            updateUIAfterLogin();
-            
-            console.log('User logged out');
-            alert('You have been logged out successfully.');
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Sign out user
+            window.cloudSync.signOut()
+              .then(() => {
+                // Update UI
+                updateUIAfterLogin();
+                
+                console.log('User logged out');
+                alert('You have been logged out successfully.');
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              })
+              .catch(error => {
+                console.error('Error signing out:', error);
+                alert('Error signing out: ' + error.message);
+              });
           } catch (error) {
             console.error('Error in logout button event:', error);
             alert('Error during logout: ' + error.message);
@@ -858,6 +913,31 @@
         });
       }
       
+      // Regular logout button
+      if (logoutButton) {
+        logoutButton.addEventListener('click', function() {
+          try {
+            // Sign out user
+            window.cloudSync.signOut()
+              .then(() => {
+                // Update UI
+                updateUIAfterLogin();
+                
+                console.log('User logged out');
+                alert('You have been logged out successfully.');
+              })
+              .catch(error => {
+                console.error('Error signing out:', error);
+                alert('Error signing out: ' + error.message);
+              });
+          } catch (error) {
+            console.error('Error in logout button event:', error);
+            alert('Error during logout: ' + error.message);
+          }
+        });
+      }
+      
+      // Copy share code mobile
       const copyShareCodeMobile = document.getElementById('copyShareCodeMobile');
       if (copyShareCodeMobile) {
         copyShareCodeMobile.addEventListener('click', function() {
@@ -910,8 +990,209 @@
         });
       }
       
+      // Signup functionality
+      if (signupButton) {
+        signupButton.addEventListener('click', function() {
+          try {
+            console.log('Signup button clicked');
+            
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!email || !password || !confirmPassword) {
+              alert('Please fill in all fields');
+              return;
+            }
+            
+            if (password !== confirmPassword) {
+              alert('Passwords do not match');
+              return;
+            }
+            
+            if (password.length < 6) {
+              alert('Password must be at least 6 characters');
+              return;
+            }
+            
+            // First try to authenticate with Firebase (create account)
+            window.cloudSync.authenticate(email, password)
+              .then(user => {
+                console.log('Firebase account created successfully');
+                createNewAccount(email, password);
+              })
+              .catch(error => {
+                console.log('Firebase account creation failed, falling back to local storage');
+                createNewAccount(email, password);
+              });
+            
+          } catch (error) {
+            console.error('Error in signup button event:', error);
+            alert('Error during signup: ' + error.message);
+          }
+        });
+      }
+      
+      // Helper function to create new account
+      function createNewAccount(email, password) {
+        // Check if user already exists
+        cloudSync.getUsers()
+          .then(users => {
+            if (users[email]) {
+              alert('An account with this email already exists. Please log in instead.');
+              return;
+            }
+            
+            // Generate share code for new user
+            const shareCode = generateShareCode();
+            
+            // Create new user
+            const hashedPw = secureHash(password, email);
+            const userData = {
+              email: email,
+              password: hashedPw,
+              shareCode: shareCode,
+              createdAt: new Date().toISOString()
+            };
+            
+            // Save user
+            cloudSync.saveUser(email, userData)
+              .then(() => {
+                // Create empty shared list
+                const sharedList = {
+                  owner: email,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  items: []
+                };
+                
+                // Save shared list
+                return cloudSync.saveSharedList(shareCode, sharedList);
+              })
+              .then(() => {
+                // Set current user
+                cloudSync.setCurrentUser(email, shareCode);
+                
+                // Update UI
+                updateUIAfterLogin();
+                
+                // Show success message
+                alert('Account created successfully! Welcome to Grocery & Meal Planner.');
+              })
+              .catch(error => {
+                console.error('Error creating account:', error);
+                alert('Error creating account: ' + error.message);
+              });
+          })
+          .catch(error => {
+            console.error('Error checking existing users:', error);
+            alert('Error checking existing users: ' + error.message);
+          });
+      }
+      
+      // Initialize cloud sync
+      if (window.cloudSync) {
+        console.log('Initializing cloud sync...');
+        window.cloudSync.init()
+          .then(() => {
+            console.log('Cloud sync initialized');
+            // Update UI based on current user
+            updateUIAfterLogin();
+          })
+          .catch(error => {
+            console.error('Error initializing cloud sync:', error);
+          });
+      } else {
+        console.warn('Cloud sync not available');
+        // Fall back to local storage
+        updateUIAfterLogin();
+      }
+      
       // Initialize UI based on login state
       updateUIAfterLogin();
+      
+      // Function to save grocery list with cloud sync
+      function saveGroceryList(items) {
+        const currentUser = cloudSync.getCurrentUser();
+        
+        if (!currentUser.email || !currentUser.shareCode) {
+          console.log('No user logged in, saving to local storage only');
+          return false;
+        }
+        
+        // Get existing list
+        cloudSync.getSharedLists()
+          .then(lists => {
+            if (!lists[currentUser.shareCode]) {
+              console.error('Shared list not found:', currentUser.shareCode);
+              return;
+            }
+            
+            // Update list items
+            const listData = lists[currentUser.shareCode];
+            listData.items = items;
+            listData.updatedAt = new Date().toISOString();
+            
+            // Save updated list
+            return cloudSync.saveSharedList(currentUser.shareCode, listData);
+          })
+          .then(() => {
+            console.log('Grocery list saved successfully');
+            // Update counter
+            updateGroceryCounter();
+          })
+          .catch(error => {
+            console.error('Error saving grocery list:', error);
+            alert('Error saving grocery list: ' + error.message);
+          });
+      }
+      
+      // Function to load grocery list from cloud sync
+      function loadGroceryList() {
+        const currentUser = cloudSync.getCurrentUser();
+        
+        if (!currentUser.email || !currentUser.shareCode) {
+          console.log('No user logged in, nothing to load');
+          return Promise.resolve([]);
+        }
+        
+        return new Promise((resolve, reject) => {
+          cloudSync.getSharedLists()
+            .then(lists => {
+              if (!lists[currentUser.shareCode]) {
+                console.warn('Shared list not found:', currentUser.shareCode);
+                resolve([]);
+                return;
+              }
+              
+              const listData = lists[currentUser.shareCode];
+              resolve(listData.items || []);
+            })
+            .catch(error => {
+              console.error('Error loading grocery list:', error);
+              reject(error);
+            });
+        });
+      }
+      
+      // Update grocery counter
+      function updateGroceryCounter() {
+        const groceryCounter = document.getElementById('groceryCounter');
+        if (!groceryCounter) return;
+        
+        loadGroceryList()
+          .then(items => {
+            const count = items.length;
+            groceryCounter.textContent = `${count} item${count !== 1 ? 's' : ''} on your list`;
+          })
+          .catch(error => {
+            console.error('Error updating grocery counter:', error);
+            groceryCounter.textContent = 'Error loading list';
+          });
+      }
+      
+      // Update grocery counter on page load
+      setTimeout(updateGroceryCounter, 1000);
       
       // Run QA tests to validate authentication system
       setTimeout(() => {

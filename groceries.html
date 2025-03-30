@@ -3,913 +3,353 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grocery List - Meal Planner 1</title>
+  <title>Grocery List</title>
+  
+  <!-- PWA Support -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4CAF50">
-  <link rel="icon" href="app-icon.svg">
-  <link rel="apple-touch-icon" href="app-icon.png">
+  
+  <!-- Firebase Configuration -->
+  <script src="firebase-config.js"></script>
+  
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
+  
+  <!-- Cloud Sync Module -->
+  <script src="cloud-sync.js"></script>
+  
   <style>
-    /* Base styles */
-    * {
-      box-sizing: border-box;
+    body { 
+      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background-color: #f8f9fa;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-    
-    .container {
-      width: 100%;
-      padding: 0 15px;
-      margin: 0 auto;
-      max-width: 100%;
-    }
-    
-    h1, h2, h3, h4 {
-      margin-bottom: 0.5rem;
-      line-height: 1.2;
-    }
-    
-    a {
-      text-decoration: none;
-    }
-    
-    /* Header styles */
-    .header {
-      background-color: #4CAF50;
-      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
-      padding: 1.2rem;
-      color: white;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      position: relative;
-      border-radius: 0 0 16px 16px;
-      margin-bottom: 1rem;
-    }
-    
-    .back-button {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.5rem;
-      color: white;
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    
-    .back-button:hover {
-      transform: translateY(-50%) scale(1.1);
-    }
-    
-    /* Share button */
-    .share-button {
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.5rem;
-      color: white;
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .share-button:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: translateY(-50%) scale(1.1);
-    }
-    
-    /* Share modal */
-    .share-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.6);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .share-modal.active {
-      display: flex;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    .share-container {
-      background-color: white;
-      padding: 1.5rem;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 360px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-      animation: slideUp 0.4s ease;
-    }
-    
-    .share-container h3 {
-      margin-top: 0;
-      margin-bottom: 1rem;
-      color: #4CAF50;
-    }
-    
-    .shared-users {
-      margin-bottom: 1rem;
-      max-height: 120px;
-      overflow-y: auto;
-    }
-    
-    .shared-user {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.5rem;
-      margin-bottom: 0.5rem;
+      padding: 20px;
       background-color: #f5f5f5;
-      border-radius: 8px;
     }
-    
-    .shared-user-remove {
-      color: #f44336;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1.2rem;
-    }
-    
-    /* Mobile friendly navigation */
-    .mobile-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: white;
-      display: flex;
-      justify-content: space-around;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-      z-index: 100;
-      border-radius: 16px 16px 0 0;
-      padding: 4px 0;
-    }
-    
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 0;
-      color: #666;
-      text-decoration: none;
-      font-size: 0.75rem;
-      width: 25%;
-      position: relative;
-      transition: all 0.2s;
-    }
-    
-    .nav-item.active {
+    h1 {
       color: #4CAF50;
+      text-align: center;
     }
-    
-    .nav-item.active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      width: 40%;
-      height: 4px;
-      background-color: #4CAF50;
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    input {
+      width: 70%;
+      padding: 10px;
+      border: 1px solid #ddd;
       border-radius: 4px;
     }
-    
-    .nav-icon {
-      font-size: 1.5rem;
-      margin-bottom: 4px;
-    }
-    
-    /* Page specific styles */
-    .page {
-      padding-bottom: 80px; /* Space for fixed navigation */
-    }
-    
-    /* Grocery list styles */
-    .grocery-list {
-      margin-top: 1rem;
-      background: white;
-      padding: 1rem;
-      border-radius: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    
-    .grocery-item {
-      display: flex;
-      align-items: center;
-      padding: 0.7rem;
-      background-color: #f9f9f9;
-      border-radius: 12px;
-      margin-bottom: 0.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .grocery-item:active {
-      transform: scale(0.98);
-      box-shadow: 0 0 0 rgba(0,0,0,0);
-    }
-    
-    .grocery-checkbox {
-      margin-right: 0.85rem;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      transition: all 0.2s ease;
-      position: relative;
-      appearance: none;
-      border: 2px solid #4CAF50;
-      background: white;
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
     }
-    
-    .grocery-checkbox:checked {
-      background-color: #4CAF50;
+    button:hover {
+      background-color: #45a049;
     }
-    
-    .grocery-checkbox:checked::after {
-      content: '✓';
-      position: absolute;
-      color: white;
-      font-size: 14px;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+    ul {
+      list-style-type: none;
+      padding: 0;
     }
-    
-    .grocery-item.checked {
-      opacity: 0.7;
-      background-color: #f1f1f1;
+    li {
+      background-color: white;
+      margin-bottom: 10px;
+      padding: 15px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
     }
-    
-    .grocery-item.checked div {
+    li.checked {
+      opacity: 0.6;
       text-decoration: line-through;
-      color: #666;
     }
-    
-    /* Add item button */
-    .add-button {
-      position: fixed;
-      bottom: 100px;
-      right: 20px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background-color: #4CAF50;
-      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
-      color: white;
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 2px solid #4CAF50;
+      margin-right: 15px;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
-      box-shadow: 0 4px 12px rgba(0,128,0,0.3);
-      border: none;
+    }
+    .checkbox.checked:after {
+      content: '✓';
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .delete-btn {
+      margin-left: auto;
+      color: #ff5252;
+      font-weight: bold;
       cursor: pointer;
-      z-index: 10;
-      transition: transform 0.2s, box-shadow 0.2s;
     }
-    
-    .add-button:hover, .add-button:active {
-      transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(0,128,0,0.4);
-    }
-    
-    /* Add item form */
-    .add-form {
-      background-color: white;
-      border-radius: 16px;
-      padding: 1.2rem;
-      margin-top: 1rem;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      display: none;
-      animation: slideIn 0.3s ease;
-    }
-    
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .add-form.active {
-      display: block;
-    }
-    
-    .form-group {
-      margin-bottom: 1.2rem;
-    }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-      color: #555;
-    }
-    
-    .form-group input, 
-    .form-group select {
-      width: 100%;
-      padding: 0.85rem;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      font-size: 1rem;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      appearance: none;
-    }
-    
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: #4CAF50;
-      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-    }
-    
-    .form-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 0.5rem;
-    }
-    
-    /* Button styles */
-    .btn {
-      padding: 0.8rem 1.4rem;
-      border-radius: 12px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary {
-      background-color: #4CAF50;
-      background-image: linear-gradient(135deg, #4CAF50, #2E7D32);
-      color: white;
-      box-shadow: 0 2px 6px rgba(0,128,0,0.2);
-    }
-    
-    .btn-primary:hover {
-      box-shadow: 0 4px 12px rgba(0,128,0,0.3);
-      transform: translateY(-2px);
-    }
-    
-    .btn-secondary {
-      background-color: #f1f1f1;
-      color: #333;
-    }
-    
-    .btn-secondary:hover {
-      background-color: #e0e0e0;
-    }
-    
-    /* Empty state */
-    .empty-list {
+    .status {
       text-align: center;
-      padding: 2rem;
-      color: #888;
-      display: none;
+      margin-bottom: 20px;
+      color: #666;
     }
-    
-    .empty-list.visible {
-      display: block;
+    .nav {
+      text-align: center;
+      margin-top: 30px;
     }
-    
-    .empty-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      opacity: 0.3;
-    }
-    
-    /* Smooth transitions */
-    * {
-      transition: background-color 0.2s, opacity 0.2s;
-    }
-    
-    /* List action buttons */
-    .list-actions {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-    
-    .list-action-btn {
-      padding: 0.6rem 1.2rem;
-      border-radius: 12px;
-      border: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      background-color: #f1f1f1;
-      color: #333;
-    }
-    
-    .list-action-btn:hover {
-      background-color: #e0e0e0;
-    }
-    
-    .list-action-btn.btn-danger {
-      background-color: #ffebee;
-      color: #d32f2f;
-    }
-    
-    .list-action-btn.btn-danger:hover {
-      background-color: #ffcdd2;
-    }
-    
-    .list-action-btn svg {
-      margin-right: 0.5rem;
-      width: 16px;
-      height: 16px;
-    }
-    
-    /* Frequently used items section */
-    .frequent-items {
-      margin-top: 1.2rem;
-      background: white;
-      padding: 1rem;
-      border-radius: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    
-    .frequent-items-title {
-      font-size: 1.1rem;
-      padding: 0.5rem 0;
-      margin-bottom: 0.8rem;
+    .nav a {
       color: #4CAF50;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .frequent-items-title button {
-      background: none;
-      border: none;
-      color: #4CAF50;
-      font-size: 0.9rem;
-      cursor: pointer;
-      padding: 0.3rem 0.5rem;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    
-    .frequent-items-title button:hover {
-      background-color: rgba(76, 175, 80, 0.1);
-    }
-    
-    .add-all-btn {
-      margin-right: 10px;
-      background-color: rgba(76, 175, 80, 0.1) !important;
-      font-weight: 500;
-    }
-    
-    .add-all-btn:hover {
-      background-color: rgba(76, 175, 80, 0.2) !important;
-    }
-    
-    .frequent-item {
-      display: flex;
-      align-items: center;
-      padding: 0.7rem;
-      background-color: #f9f9f9;
-      border-radius: 12px;
-      margin-bottom: 0.5rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    
-    .frequent-item:hover {
-      background-color: #e8f5e9;
+      text-decoration: none;
+      margin: 0 10px;
     }
   </style>
 </head>
 <body>
-  <header class="header">
-    <a href="index.html" class="back-button">←</a>
-    <h1>Grocery List</h1>
-    <div class="share-button" id="shareList" title="Share this list">
-      <span>👥</span>
-    </div>
-  </header>
-
   <div class="container">
-    <div class="page">
-      <div class="add-form" id="addForm">
-        <div class="form-group">
-          <label for="itemName">Item Name</label>
-          <input type="text" id="itemName" placeholder="Enter item name">
-        </div>
-        <div class="form-group">
-          <label for="itemQuantity">Quantity</label>
-          <input type="text" id="itemQuantity" placeholder="E.g., 2 lbs, 1 bottle">
-        </div>
-        <div class="form-buttons">
-          <button class="btn btn-secondary" id="cancelAdd">Cancel</button>
-          <button class="btn btn-primary" id="saveItem">Add Item</button>
-        </div>
-      </div>
-      
-      <div class="list-actions">
-        <button class="list-action-btn" id="removeChecked">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            <line x1="10" y1="11" x2="10" y2="17"></line>
-            <line x1="14" y1="11" x2="14" y2="17"></line>
-          </svg>
-          Remove Checked
-        </button>
-        <button class="list-action-btn btn-danger" id="clearList">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-          Clear All
-        </button>
-      </div>
-      
-      <div class="grocery-list" id="groceryList">
-        <!-- Grocery items will be added here -->
-      </div>
-      
-      <div class="frequent-items" id="frequentItems">
-        <div class="frequent-items-title">
-          <span>Frequently Used Items</span>
-          <div>
-            <button id="addAllFrequent" class="add-all-btn">Add All</button>
-            <button id="editFrequent">Edit</button>
-          </div>
-        </div>
-        <div class="frequent-item" data-name="Milk" data-quantity="1 gallon">Milk</div>
-        <div class="frequent-item" data-name="Eggs" data-quantity="1 dozen">Eggs</div>
-        <div class="frequent-item" data-name="Bread" data-quantity="1 loaf">Bread</div>
-        <div class="frequent-item" data-name="Bananas" data-quantity="bunch">Bananas</div>
-        <div class="frequent-item" data-name="Coffee" data-quantity="1 bag">Coffee</div>
-      </div>
-      
-      <button class="add-button" id="addButton">+</button>
+    <h1>Grocery List</h1>
+    
+    <div id="status" class="status">Loading items...</div>
+    
+    <div class="form-group">
+      <input type="text" id="itemInput" placeholder="Add new item...">
+      <button id="addButton">Add</button>
+    </div>
+    
+    <ul id="groceryList"></ul>
+    
+    <div class="nav">
+      <a href="index.html">Back to Home</a>
     </div>
   </div>
-
-  <!-- Bottom Navigation -->
-  <nav class="mobile-nav">
-    <a href="index.html" class="nav-item">
-      <div class="nav-icon">🏠</div>
-      <span>Home</span>
-    </a>
-    <a href="groceries.html" class="nav-item active">
-      <div class="nav-icon">🛒</div>
-      <span>Grocery</span>
-    </a>
-    <a href="meal-plan.html" class="nav-item">
-      <div class="nav-icon">🍽️</div>
-      <span>Meals</span>
-    </a>
-    <a href="recipes.html" class="nav-item">
-      <div class="nav-icon">📖</div>
-      <span>Recipes</span>
-    </a>
-  </nav>
-
-  <div class="share-modal" id="shareModal">
-    <div class="share-container">
-      <h3>Share Grocery List</h3>
-      <div class="shared-users" id="sharedUsers">
-        <!-- Shared users will be displayed here -->
-      </div>
-      <div class="form-group">
-        <label for="shareEmail">Email to share with</label>
-        <input type="email" id="shareEmail" placeholder="Enter email">
-      </div>
-      <div class="form-buttons">
-        <button class="btn btn-secondary" id="cancelShare">Cancel</button>
-        <button class="btn btn-primary" id="confirmShare">Share</button>
-      </div>
-    </div>
-  </div>
-
+  
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elements
+      const statusEl = document.getElementById('status');
+      const itemInput = document.getElementById('itemInput');
       const addButton = document.getElementById('addButton');
-      const addForm = document.getElementById('addForm');
-      const cancelAdd = document.getElementById('cancelAdd');
-      const saveItem = document.getElementById('saveItem');
       const groceryList = document.getElementById('groceryList');
-      const removeChecked = document.getElementById('removeChecked');
-      const clearList = document.getElementById('clearList');
-      const frequentItems = document.querySelectorAll('.frequent-item');
-      const editFrequent = document.getElementById('editFrequent');
-      const addAllFrequent = document.getElementById('addAllFrequent');
-      const shareList = document.getElementById('shareList');
       
-      // Get current user info
-      const currentUserEmail = localStorage.getItem('currentUserEmail') || sessionStorage.getItem('currentUserEmail');
-      const currentSharedCode = localStorage.getItem('currentSharedCode') || sessionStorage.getItem('currentSharedCode');
-      
-      // Initialize shared lists from localStorage
-      const sharedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
-      
-      // Share button functionality
-      shareList.addEventListener('click', function() {
-        if (!currentUserEmail || !currentSharedCode) {
-          alert('Please log in to share your grocery list.');
-          return;
-        }
-        
-        const sharedList = sharedLists[currentSharedCode];
-        if (!sharedList) {
-          alert('No active grocery list found.');
-          return;
-        }
-        
-        alert('Your sharing code is: ' + currentSharedCode + '\n\nShare this code with family members so they can access your grocery list when they log in.');
-      });
-      
-      // Check if there are ingredients added from recipes
-      const selectedIngredients = JSON.parse(localStorage.getItem('selectedIngredients') || '[]');
-      if (selectedIngredients.length > 0) {
-        // Process ingredients from recipes
-        selectedIngredients.forEach(ingredient => {
-          // Extract name and quantity if possible
-          let name = ingredient;
-          let quantity = '';
-          
-          if (ingredient.includes(' - ')) {
-            const parts = ingredient.split(' - ');
-            name = parts[0];
-            quantity = parts[1];
-          }
-          
-          // Add to grocery list
-          addGroceryItem(name, quantity);
-        });
-        
-        // Clear the selected ingredients
-        localStorage.removeItem('selectedIngredients');
-      }
-      
-      // Check if adding from frequent items page
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('add-frequent') === 'true') {
-        const selectedFrequentItems = JSON.parse(localStorage.getItem('selectedFrequentItems') || '[]');
-        
-        if (selectedFrequentItems.length > 0) {
-          // Add selected frequent items to grocery list
-          selectedFrequentItems.forEach(item => {
-            addGroceryItem(item.name, item.quantity);
-          });
-          
-          // Clear selected items
-          localStorage.removeItem('selectedFrequentItems');
-        }
-        
-        // Remove the parameter to prevent duplicate additions on refresh
-        window.history.replaceState({}, document.title, 'groceries.html');
-      }
-      
-      // Show/hide add form
-      addButton.addEventListener('click', function() {
-        addForm.classList.add('active');
-        document.getElementById('itemName').focus();
-      });
-      
-      cancelAdd.addEventListener('click', function() {
-        addForm.classList.remove('active');
-        resetForm();
-      });
-      
-      // Handle checkbox toggling
-      groceryList.addEventListener('change', function(e) {
-        if (e.target.matches('.grocery-checkbox')) {
-          const item = e.target.closest('.grocery-item');
-          if (e.target.checked) {
-            item.classList.add('checked');
-          } else {
-            item.classList.remove('checked');
-          }
-          
-          // Save changes
-          saveGroceryListState();
-        }
-      });
-      
-      // Remove checked items - without confirmation
-      removeChecked.addEventListener('click', function() {
-        const checkedItems = groceryList.querySelectorAll('.grocery-item.checked');
-        if (checkedItems.length > 0) {
-          checkedItems.forEach(item => item.remove());
-          saveGroceryListState();
-        }
-      });
-      
-      // Clear entire list - without confirmation
-      clearList.addEventListener('click', function() {
-        groceryList.innerHTML = '';
-        saveGroceryListState();
-      });
-      
-      // Add frequently used items
-      frequentItems.forEach(item => {
-        item.addEventListener('click', function() {
-          const name = this.getAttribute('data-name');
-          const quantity = this.getAttribute('data-quantity');
-          addGroceryItem(name, quantity);
-        });
-      });
-      
-      // Edit frequent items - link to separate page
-      editFrequent.addEventListener('click', function() {
-        window.location.href = 'frequent-items.html';
-      });
-      
-      // Save new item
-      saveItem.addEventListener('click', function() {
-        const name = document.getElementById('itemName').value;
-        const quantity = document.getElementById('itemQuantity').value;
-        
-        if (name) {
-          // Create new item
-          addGroceryItem(name, quantity);
-          
-          // Reset and hide form
-          resetForm();
-          addForm.classList.remove('active');
-        }
-      });
-      
-      // Add all frequent items at once
-      addAllFrequent.addEventListener('click', function() {
-        frequentItems.forEach(item => {
-          const name = item.getAttribute('data-name');
-          const quantity = item.getAttribute('data-quantity');
-          addGroceryItem(name, quantity);
-        });
-        
-        // Show feedback (optional)
-        addAllFrequent.textContent = "Added!";
-        setTimeout(() => {
-          addAllFrequent.textContent = "Add All";
-        }, 1500);
-      });
-      
-      // Add grocery item and save to shared list
-      function addGroceryItem(name, quantity) {
-        // First add to UI
-        const item = document.createElement('div');
-        item.className = 'grocery-item';
-        
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'grocery-checkbox';
-        
-        const text = document.createElement('div');
-        text.textContent = quantity ? `${name} - ${quantity}` : name;
-        
-        item.appendChild(checkbox);
-        item.appendChild(text);
-        groceryList.appendChild(item);
-        
-        // Then save changes
-        saveGroceryListState();
-      }
-      
-      // Reset form fields
-      function resetForm() {
-        document.getElementById('itemName').value = '';
-        document.getElementById('itemQuantity').value = '';
-      }
-      
-      // Save grocery list to shared list
-      function saveGroceryListState() {
-        // Get current list items
-        const groceryData = [];
-        const items = groceryList.querySelectorAll('.grocery-item');
-        
-        items.forEach(item => {
-          groceryData.push({
-            text: item.querySelector('div').textContent,
-            checked: item.querySelector('.grocery-checkbox').checked
-          });
-        });
-        
-        // Save to shared list if logged in
-        if (currentUserEmail && currentSharedCode && sharedLists[currentSharedCode]) {
-          sharedLists[currentSharedCode].items = groceryData;
-          sharedLists[currentSharedCode].updatedAt = new Date().toISOString();
-          localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
-        }
-        
-        // Always save to localStorage for offline access
-        localStorage.setItem('groceryList', JSON.stringify(groceryData));
-        updateHomePageCounter(groceryData);
-      }
-      
-      // Update home page counter
-      function updateHomePageCounter(groceryData) {
-        const totalItems = groceryData.length;
-        const remainingItems = groceryData.filter(item => !item.checked).length;
-        
-        // Save for home page to display
-        localStorage.setItem('groceryCount', JSON.stringify({
-          total: totalItems,
-          remaining: remainingItems
-        }));
-      }
-      
-      // Render grocery items from array
-      function renderGroceryItems(items) {
-        // Clear current list
-        groceryList.innerHTML = '';
-        
-        // Add items
-        items.forEach(item => {
-          const itemElement = document.createElement('div');
-          itemElement.className = 'grocery-item';
-          if (item.checked) {
-            itemElement.classList.add('checked');
-          }
-          
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.className = 'grocery-checkbox';
-          checkbox.checked = item.checked;
-          
-          const text = document.createElement('div');
-          text.textContent = item.text;
-          
-          itemElement.appendChild(checkbox);
-          itemElement.appendChild(text);
-          groceryList.appendChild(itemElement);
-        });
-      }
-      
-      // Load grocery list
-      function loadGroceryList() {
-        // First check if there's a shared list
-        if (currentUserEmail && currentSharedCode && sharedLists[currentSharedCode]) {
-          renderGroceryItems(sharedLists[currentSharedCode].items || []);
-        } else {
-          // Fall back to local storage
-          const savedList = localStorage.getItem('groceryList');
-          if (savedList) {
-            const groceryData = JSON.parse(savedList);
-            renderGroceryItems(groceryData);
-          }
-        }
-      }
+      // Variables
+      let groceryItems = [];
       
       // Initialize
-      loadGroceryList();
+      init();
       
-      // Set up periodic synchronization for shared lists
-      if (currentUserEmail && currentSharedCode) {
-        setInterval(() => {
-          // Check if there's an update to the shared list
-          const updatedLists = JSON.parse(localStorage.getItem('sharedGroceryLists') || '{}');
-          if (updatedLists[currentSharedCode] && 
-              (!sharedLists[currentSharedCode] || 
-               updatedLists[currentSharedCode].updatedAt !== sharedLists[currentSharedCode].updatedAt)) {
-            
-            // Update local copy
-            Object.assign(sharedLists, updatedLists);
-            
-            // Update UI
-            renderGroceryItems(updatedLists[currentSharedCode].items || []);
+      function init() {
+        // Add event listener for add button
+        addButton.addEventListener('click', addItem);
+        
+        // Add event listener for enter key
+        itemInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            addItem();
           }
-        }, 2000); // Check every 2 seconds
+        });
+        
+        // Initialize cloud sync
+        if (window.cloudSync) {
+          statusEl.textContent = 'Connecting to sync service...';
+          
+          cloudSync.init()
+            .then(() => {
+              statusEl.textContent = 'Connected! Loading items...';
+              
+              // Check if user is logged in
+              const currentUser = cloudSync.getCurrentUser();
+              
+              if (currentUser.email && currentUser.shareCode) {
+                loadItems();
+              } else {
+                statusEl.textContent = 'Please log in to sync your grocery list.';
+                loadLocalItems();
+              }
+            })
+            .catch(error => {
+              console.error('Error initializing cloud sync:', error);
+              statusEl.textContent = 'Error connecting to sync service. Using local storage.';
+              loadLocalItems();
+            });
+        } else {
+          statusEl.textContent = 'Sync service not available. Using local storage.';
+          loadLocalItems();
+        }
+      }
+      
+      function loadItems() {
+        const currentUser = cloudSync.getCurrentUser();
+        
+        cloudSync.getSharedLists()
+          .then(lists => {
+            if (!lists[currentUser.shareCode]) {
+              // Create a new list if it doesn't exist
+              statusEl.textContent = 'Creating new grocery list...';
+              const newList = {
+                owner: currentUser.email,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                items: []
+              };
+              
+              return cloudSync.saveSharedList(currentUser.shareCode, newList)
+                .then(() => {
+                  groceryItems = [];
+                  renderItems();
+                  statusEl.textContent = 'New grocery list created!';
+                });
+            } else {
+              // Use existing list
+              const listData = lists[currentUser.shareCode];
+              groceryItems = listData.items || [];
+              renderItems();
+              statusEl.textContent = groceryItems.length > 0 
+                ? `${groceryItems.length} item${groceryItems.length !== 1 ? 's' : ''} in your list` 
+                : 'Your grocery list is empty. Add some items!';
+            }
+          })
+          .catch(error => {
+            console.error('Error loading items:', error);
+            statusEl.textContent = 'Error loading items. Using local storage.';
+            loadLocalItems();
+          });
+      }
+      
+      function loadLocalItems() {
+        try {
+          const savedItems = localStorage.getItem('groceryItems');
+          if (savedItems) {
+            groceryItems = JSON.parse(savedItems);
+          } else {
+            groceryItems = [];
+          }
+          renderItems();
+          statusEl.textContent = groceryItems.length > 0 
+            ? `${groceryItems.length} item${groceryItems.length !== 1 ? 's' : ''} in your list (local)` 
+            : 'Your grocery list is empty. Add some items!';
+        } catch (error) {
+          console.error('Error loading local items:', error);
+          groceryItems = [];
+          renderItems();
+          statusEl.textContent = 'Error loading local items.';
+        }
+      }
+      
+      function saveItems() {
+        statusEl.textContent = 'Saving...';
+        
+        const currentUser = cloudSync.getCurrentUser();
+        
+        if (currentUser.email && currentUser.shareCode) {
+          // Save to cloud
+          cloudSync.getSharedLists()
+            .then(lists => {
+              let listData = lists[currentUser.shareCode];
+              
+              if (!listData) {
+                listData = {
+                  owner: currentUser.email,
+                  createdAt: new Date().toISOString(),
+                  shareCode: currentUser.shareCode
+                };
+              }
+              
+              listData.items = groceryItems;
+              listData.updatedAt = new Date().toISOString();
+              
+              return cloudSync.saveSharedList(currentUser.shareCode, listData);
+            })
+            .then(() => {
+              statusEl.textContent = 'List saved to cloud!';
+              saveLocalItems(); // Also save locally as backup
+            })
+            .catch(error => {
+              console.error('Error saving to cloud:', error);
+              statusEl.textContent = 'Error saving to cloud. Saved locally.';
+              saveLocalItems();
+            });
+        } else {
+          // Save locally only
+          saveLocalItems();
+        }
+      }
+      
+      function saveLocalItems() {
+        try {
+          localStorage.setItem('groceryItems', JSON.stringify(groceryItems));
+          if (!cloudSync.getCurrentUser().email) {
+            statusEl.textContent = 'List saved locally!';
+          }
+        } catch (error) {
+          console.error('Error saving locally:', error);
+          statusEl.textContent = 'Error saving locally.';
+        }
+      }
+      
+      function renderItems() {
+        groceryList.innerHTML = '';
+        
+        groceryItems.forEach((item, index) => {
+          const li = document.createElement('li');
+          if (item.checked) {
+            li.classList.add('checked');
+          }
+          
+          const checkbox = document.createElement('div');
+          checkbox.className = 'checkbox';
+          if (item.checked) {
+            checkbox.classList.add('checked');
+          }
+          checkbox.addEventListener('click', () => toggleItem(index));
+          
+          const text = document.createElement('span');
+          text.textContent = item.text;
+          text.addEventListener('click', () => toggleItem(index));
+          
+          const deleteBtn = document.createElement('span');
+          deleteBtn.className = 'delete-btn';
+          deleteBtn.textContent = '✕';
+          deleteBtn.addEventListener('click', () => deleteItem(index));
+          
+          li.appendChild(checkbox);
+          li.appendChild(text);
+          li.appendChild(deleteBtn);
+          groceryList.appendChild(li);
+        });
+      }
+      
+      function addItem() {
+        const text = itemInput.value.trim();
+        if (!text) return;
+        
+        groceryItems.push({
+          text,
+          checked: false,
+          createdAt: new Date().toISOString()
+        });
+        
+        saveItems();
+        renderItems();
+        
+        itemInput.value = '';
+        itemInput.focus();
+      }
+      
+      function toggleItem(index) {
+        groceryItems[index].checked = !groceryItems[index].checked;
+        saveItems();
+        renderItems();
+      }
+      
+      function deleteItem(index) {
+        groceryItems.splice(index, 1);
+        saveItems();
+        renderItems();
       }
     });
   </script>
