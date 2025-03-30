@@ -6,6 +6,7 @@ A mobile-friendly web application for managing your grocery shopping list and me
 
 - **User Authentication**: Create accounts using email and password
 - **Shared Lists**: Share your grocery list with family members using a 6-character share code
+- **Cross-Device Sync**: Export your account from one device and import it on another
 - **Grocery List Management**: Add, remove, and check off items from your shopping list
 - **Meal Planning**: Plan your meals for the week and easily add ingredients to your grocery list
 - **Recipe Collection**: Browse and save your favorite recipes for easy meal planning
@@ -19,6 +20,16 @@ A mobile-friendly web application for managing your grocery shopping list and me
 1. Open `index.html` in your web browser
 2. Create an account using your email and a password (minimum 6 characters)
 3. You'll receive a share code that you can give to family members to access your grocery list
+
+### Using on Multiple Devices
+
+1. On your computer, go to the Account section after logging in
+2. Click "Export Account Data"
+3. Copy the generated code
+4. On your phone or another device, visit the app and go to the login screen
+5. Scroll down to the "Import Account from Another Device" section
+6. Paste the code you copied and click "Import Account"
+7. You'll be automatically logged in with all your data available on the new device
 
 ### Sharing Your List
 
@@ -53,6 +64,7 @@ A mobile-friendly web application for managing your grocery shopping list and me
 
 - Make sure you're using the correct email and password
 - If you forgot your password, use the "Clear All Data" button to reset (this will delete all accounts and data)
+- If you get "No accounts found" on a new device, use the Export/Import feature to transfer your account
 - Check the browser console for detailed error messages
 
 ### Sharing Issues
@@ -60,6 +72,12 @@ A mobile-friendly web application for managing your grocery shopping list and me
 - Share codes are 6 characters long and contain only letters and numbers
 - Make sure you're entering the code exactly as it was shared with you
 - If joining fails, ask the list owner to verify their share code
+
+### Export/Import Issues
+
+- Make sure you copy the entire export code
+- The import code contains your account credentials and list data
+- If import fails, try creating a new export code on the original device
 
 ## Technical Information
 

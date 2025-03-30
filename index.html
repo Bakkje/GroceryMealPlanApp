@@ -1555,6 +1555,111 @@ Share this code with family members so they can access your grocery list.`);
       // Initialize UI based on login state
       updateUIAfterLogin();
       
+      // Add export button functionality
+      const exportAccountButton = document.getElementById('exportAccountButton');
+      if (exportAccountButton) {
+        exportAccountButton.addEventListener('click', function() {
+          try {
+            const currentEmail = localStorage.getItem('currentUserEmail');
+            if (!currentEmail || !users[currentEmail]) {
+              alert('Cannot export: No active account found');
+              return;
+            }
+            
+            // Create export data object
+            const exportData = {
+              user: {
+                email: currentEmail,
+                data: users[currentEmail]
+              },
+              lists: {}
+            };
+            
+            // Add this user's shared list
+            const shareCode = users[currentEmail].shareCode;
+            if (shareCode && sharedLists[shareCode]) {
+              exportData.lists[shareCode] = sharedLists[shareCode];
+            }
+            
+            // Convert to base64 string
+            const exportString = btoa(JSON.stringify(exportData));
+            
+            // Display the export code
+            document.getElementById('exportCodeArea').value = exportString;
+            document.getElementById('exportResult').style.display = 'block';
+            
+            console.log('Account data exported successfully');
+          } catch (error) {
+            console.error('Export error:', error);
+            alert('Error exporting account data: ' + error.message);
+          }
+        });
+      }
+
+      const copyExportCode = document.getElementById('copyExportCode');
+      if (copyExportCode) {
+        copyExportCode.addEventListener('click', function() {
+          const exportArea = document.getElementById('exportCodeArea');
+          exportArea.select();
+          document.execCommand('copy');
+          this.textContent = 'Copied!';
+          setTimeout(() => {
+            this.textContent = 'Copy Code';
+          }, 2000);
+        });
+      }
+
+      const importAccountButton = document.getElementById('importAccountButton');
+      if (importAccountButton) {
+        importAccountButton.addEventListener('click', function() {
+          try {
+            const importCode = document.getElementById('importCodeArea').value.trim();
+            
+            if (!importCode) {
+              alert('Please paste your export code in the text area');
+              return;
+            }
+            
+            // Decode the base64 string
+            const importData = JSON.parse(atob(importCode));
+            
+            if (!importData.user || !importData.user.email || !importData.user.data) {
+              alert('Invalid import code format');
+              return;
+            }
+            
+            const email = importData.user.email;
+            
+            // Add or update user data
+            users[email] = importData.user.data;
+            
+            // Add or update shared lists
+            if (importData.lists) {
+              Object.keys(importData.lists).forEach(code => {
+                sharedLists[code] = importData.lists[code];
+              });
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('appUsers', JSON.stringify(users));
+            localStorage.setItem('sharedGroceryLists', JSON.stringify(sharedLists));
+            
+            // Set current user
+            localStorage.setItem('currentUserEmail', email);
+            localStorage.setItem('currentSharedCode', importData.user.data.shareCode);
+            
+            // Update UI
+            updateUIAfterLogin();
+            
+            // Show success message
+            alert('Account imported successfully! You are now logged in as ' + email);
+          } catch (error) {
+            console.error('Import error:', error);
+            alert('Error importing account data: ' + error.message + '\nMake sure you copied the entire export code correctly.');
+          }
+        });
+      }
+      
       // Run QA tests to validate authentication system
       setTimeout(() => {
         console.log('-----------------------------------------------------');
@@ -1664,6 +1769,94 @@ Share this code with family members so they can access your grocery list.`);
       document.getElementById('offlineIndicator').style.display = 'block';
     }
   </script>
+
+  <!-- Add the export/import functionality -->
+  <div class="account-container">
+    <h2>Account</h2>
+    
+    <!-- Account info when logged in -->
+    <div id="accountInfo" style="display: none;">
+      <p>Logged in as: <span id="currentUserDisplay"></span></p>
+      <div class="share-code-container">
+        <p>Your Share Code:</p>
+        <div class="share-code-box">
+          <span id="shareCodeDisplay"></span>
+          <button id="copyShareCode">Copy</button>
+        </div>
+      </div>
+      <button id="logoutButton">Logout</button>
+      
+      <!-- Export account data section -->
+      <div class="export-section">
+        <h3>Use on another device</h3>
+        <p>Export your account data to use on your phone or another device:</p>
+        <button id="exportAccountButton" class="btn primary-btn">Export Account Data</button>
+        <div id="exportResult" style="display: none; margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
+          <p>Copy this code to import on another device:</p>
+          <textarea id="exportCodeArea" rows="4" style="width: 100%; margin: 10px 0; border-radius: 5px; padding: 10px;" readonly></textarea>
+          <button id="copyExportCode" class="btn secondary-btn">Copy Code</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Account forms when not logged in -->
+    <div id="accountForms">
+      <!-- Login form -->
+      <div id="accountLoginForm">
+        <h3>Login</h3>
+        <div class="form-group">
+          <label for="loginEmail">Email:</label>
+          <input type="email" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password:</label>
+          <input type="password" id="loginPassword" required>
+        </div>
+        <button id="accountLoginButton" class="btn primary-btn">Login</button>
+        <p>Don't have an account? <a href="#" id="showSignupLink">Sign up</a></p>
+        
+        <!-- Import account data section -->
+        <div class="import-section">
+          <h3>Import Account from Another Device</h3>
+          <p>Have an account on another device? Import it here:</p>
+          <div class="form-group">
+            <textarea id="importCodeArea" rows="4" style="width: 100%; border-radius: 5px; padding: 10px;" placeholder="Paste your export code here..."></textarea>
+          </div>
+          <button id="importAccountButton" class="btn secondary-btn">Import Account</button>
+        </div>
+      </div>
+      
+      <!-- Signup form -->
+      <div id="signupForm" style="display: none;">
+        <h3>Sign Up</h3>
+        <div class="form-group">
+          <label for="signupEmail">Email:</label>
+          <input type="email" id="signupEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="signupPassword">Password:</label>
+          <input type="password" id="signupPassword" required>
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password:</label>
+          <input type="password" id="confirmPassword" required>
+        </div>
+        <button id="signupButton" class="btn primary-btn">Sign Up</button>
+        <p>Already have an account? <a href="#" id="showLoginLink">Login</a></p>
+      </div>
+      
+      <!-- Join list form -->
+      <div id="joinListForm" style="display: none;">
+        <h3>Join Shared List</h3>
+        <p>Enter the share code you received:</p>
+        <div class="form-group">
+          <input type="text" id="shareCodeInput" placeholder="Enter 6-character code" maxlength="6" style="text-transform: uppercase;">
+        </div>
+        <button id="joinListButton" class="btn primary-btn">Join List</button>
+        <p>Or <a href="#" id="createNewListLink">create your own list</a></p>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
 
